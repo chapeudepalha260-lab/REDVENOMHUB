@@ -1,6 +1,1280 @@
-if getgenv().__BF_LOADED then
-	return getgenv().__BF_RESULT
+-- FROST BLADE HUB ❄ | UI autonomo: abre mesmo que o jogo nao ofereca as funcoes.
+-- Para executar no Roblox Studio: LocalScript em StarterPlayer > StarterPlayerScripts.
+-- A lista abaixo inclui os controles identificados no script fornecido.
+local Players=game:GetService("Players")
+local TweenService=game:GetService("TweenService")
+local UserInputService=game:GetService("UserInputService")
+local player=Players.LocalPlayer or Players.PlayerAdded:Wait()
+local parent=player:WaitForChild("PlayerGui")
+local old=parent:FindFirstChild("FrostBladeFixedGUI")
+if old then old:Destroy() end
+local C={bg=Color3.fromRGB(3,10,24),main=Color3.fromRGB(7,18,36),panel=Color3.fromRGB(10,28,52),tile=Color3.fromRGB(15,40,68),ice=Color3.fromRGB(105,235,255),text=Color3.fromRGB(241,251,255),muted=Color3.fromRGB(160,197,214),low=Color3.fromRGB(37,73,104),accent=Color3.fromRGB(187,246,255)}
+local function create(kind,props,par)
+    local inst=Instance.new(kind)
+    for k,v in pairs(props or {}) do inst[k]=v end
+    if par then inst.Parent=par end
+    return inst
 end
+local function round(parent,n) create("UICorner",{CornerRadius=UDim.new(0,n or 10)},parent) end
+local function border(parent,col,size) create("UIStroke",{Color=col or C.low,Thickness=size or 1,Transparency=.15},parent) end
+local function txt(parent,value,size,col,bold)
+    return create("TextLabel",{BackgroundTransparency=1,Text=tostring(value or ""),TextColor3=col or C.text,TextSize=size or 13,TextWrapped=true,Font=bold and Enum.Font.GothamBold or Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center},parent)
+end
+local function button(parent,value)
+    local a=create("TextButton",{BackgroundColor3=C.tile,BorderSizePixel=0,AutoButtonColor=true,Text=tostring(value),TextColor3=C.text,TextSize=12,Font=Enum.Font.GothamBold},parent)
+    round(a,8);return a
+end
+local gui=create("ScreenGui",{Name="FrostBladeFixedGUI",ResetOnSpawn=false,IgnoreGuiInset=true,DisplayOrder=100000,ZIndexBehavior=Enum.ZIndexBehavior.Sibling},parent)
+local window=create("Frame",{Name="MenuPrincipal",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromScale(.88,.84),BackgroundColor3=C.main,BorderSizePixel=0,Visible=false,ClipsDescendants=true},gui)
+create("UISizeConstraint",{MinSize=Vector2.new(330,360),MaxSize=Vector2.new(1020,690)},window)
+round(window,16);border(window,C.ice,2)
+local header=create("Frame",{Name="Cabecalho",Size=UDim2.new(1,0,0,61),BackgroundColor3=C.panel,BorderSizePixel=0,Active=true},window)
+local title=txt(header,"🥶 FROST BLADE HUB",20,C.text,true);title.Size=UDim2.new(1,-102,0,30);title.Position=UDim2.fromOffset(15,6)
+local sub=txt(header,"ARCTIC EDITION • MENU REFEITO",10,C.accent,true);sub.Position=UDim2.fromOffset(17,35);sub.Size=UDim2.new(1,-120,0,19)
+local close=button(header,"✕");close.Size=UDim2.fromOffset(28,28);close.Position=UDim2.new(1,-38,0,16)
+local mini=button(header,"−");mini.Size=UDim2.fromOffset(28,28);mini.Position=UDim2.new(1,-72,0,16)
+local line=create("Frame",{Size=UDim2.new(1,0,0,2),Position=UDim2.new(0,0,1,-2),BorderSizePixel=0,BackgroundColor3=C.ice},header)
+local navW=(workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize.X or 800)<600 and 115 or 174
+local side=create("Frame",{Name="Abas",Position=UDim2.fromOffset(0,62),Size=UDim2.new(0,navW,1,-62),BackgroundColor3=C.bg,BorderSizePixel=0},window)
+local navCaption=txt(side,"  ❄ NAVEGAÇÃO",11,C.ice,true);navCaption.Size=UDim2.new(1,-10,0,33);navCaption.Position=UDim2.fromOffset(5,5)
+local nav=create("ScrollingFrame",{BackgroundTransparency=1,BorderSizePixel=0,Position=UDim2.fromOffset(5,40),Size=UDim2.new(1,-10,1,-80),ScrollBarThickness=3,ScrollBarImageColor3=C.ice,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y},side)
+create("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder},nav)
+local foot=txt(side,"FROST BLADE • ARCTIC",9,C.muted,true);foot.Size=UDim2.new(1,-12,0,22);foot.Position=UDim2.new(0,9,1,-27)
+local content=create("Frame",{BackgroundTransparency=1,Position=UDim2.fromOffset(navW,62),Size=UDim2.new(1,-navW,1,-62)},window)
+local search=create("TextBox",{Text="",ClearTextOnFocus=false,PlaceholderText="Pesquisar função do hub...",TextSize=12,Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left,TextColor3=C.text,PlaceholderColor3=C.muted,BackgroundColor3=C.panel,BorderSizePixel=0,Position=UDim2.fromOffset(10,11),Size=UDim2.new(1,-20,0,33)},content)
+round(search,7);create("UIPadding",{PaddingLeft=UDim.new(0,10)},search)
+local sectionTitle=txt(content,"AUTO FARM",15,C.ice,true);sectionTitle.Position=UDim2.fromOffset(13,49);sectionTitle.Size=UDim2.new(1,-23,0,22)
+local info=txt(content,"334 recursos identificados",10,C.muted);info.Position=UDim2.fromOffset(13,75);info.Size=UDim2.new(1,-23,0,17)
+local scroller=create("ScrollingFrame",{Name="Conteudo",Position=UDim2.fromOffset(7,99),Size=UDim2.new(1,-14,1,-109),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=4,ScrollBarImageColor3=C.ice,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y},content)
+create("UIListLayout",{Padding=UDim.new(0,6),SortOrder=Enum.SortOrder.LayoutOrder},scroller)
+create("UIPadding",{PaddingLeft=UDim.new(0,3),PaddingRight=UDim.new(0,7),PaddingTop=UDim.new(0,4),PaddingBottom=UDim.new(0,16)},scroller)
+local bubble=button(gui,"🥶");bubble.Name="AbrirMenu";bubble.Size=UDim2.fromOffset(52,52);bubble.Position=UDim2.new(1,-66,.51,-26);bubble.TextSize=24;bubble.Visible=false;border(bubble,C.ice,2)
+local alert=txt(gui,"",12,C.text,true);alert.BackgroundTransparency=0;alert.BackgroundColor3=C.panel;alert.TextXAlignment=Enum.TextXAlignment.Center;alert.AnchorPoint=Vector2.new(.5,1);alert.Position=UDim2.new(.5,0,1,-18);alert.Size=UDim2.new(.80,0,0,42);alert.Visible=false;alert.ZIndex=80;round(alert,9);border(alert,C.ice,1)
+local notifyToken=0
+local function notify(message)
+    notifyToken+=1;local this=notifyToken
+    alert.Text="❄ "..tostring(message);alert.Visible=true
+    task.delay(3,function() if notifyToken==this and alert.Parent then alert.Visible=false end end)
+end
+-- FROST BLADE HUB V7 | Entrada cinematografica. Somente interface; nao bloqueia o backend.
+local intro=create("Frame",{Name="EntradaGeladaV10",Size=UDim2.fromScale(1,1),BackgroundColor3=C.bg,BorderSizePixel=0,ZIndex=90,ClipsDescendants=true},gui)
+local introGradient=create("UIGradient",{Rotation=25,Color=ColorSequence.new({
+    ColorSequenceKeypoint.new(0,Color3.fromRGB(1,6,19)),
+    ColorSequenceKeypoint.new(.38,Color3.fromRGB(4,21,48)),
+    ColorSequenceKeypoint.new(.72,Color3.fromRGB(4,42,70)),
+    ColorSequenceKeypoint.new(1,Color3.fromRGB(0,7,22))
+})},intro)
+-- A aurora se move devagar, com luz azul e ciano, sem imagens externas.
+local aurora=create("Frame",{Name="Aurora",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.46),Size=UDim2.fromScale(1.7,.7),Rotation=-13,BackgroundColor3=Color3.fromRGB(14,91,136),BackgroundTransparency=.76,BorderSizePixel=0,ZIndex=90},intro)
+create("UIGradient",{Rotation=0,Transparency=NumberSequence.new({
+    NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(.25,.64),
+    NumberSequenceKeypoint.new(.55,.28),NumberSequenceKeypoint.new(.8,.78),NumberSequenceKeypoint.new(1,1)
+})},aurora)
+TweenService:Create(aurora,TweenInfo.new(3.7,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.fromScale(.62,.54),Rotation=7}):Play()
+-- Particulas de gelo com profundidade, em numero limitado para nao pesar.
+for i=1,38 do
+    local large=i%7==0
+    local flake=txt(intro,large and "✦" or (i%3==0 and "✧" or "❄"),large and 24 or math.random(10,19),i%4==0 and C.accent or C.ice)
+    flake.Name="Floco"..i
+    flake.Size=UDim2.fromOffset(30,30)
+    flake.Position=UDim2.fromScale(math.random(3,97)/100,-math.random(5,80)/100)
+    flake.TextXAlignment=Enum.TextXAlignment.Center
+    flake.TextTransparency=large and .12 or .35
+    flake.ZIndex=91
+    TweenService:Create(flake,TweenInfo.new(math.random(48,85)/10,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut,-1),{
+        Position=UDim2.fromScale(math.random(3,97)/100,1.1),Rotation=math.random(-80,80),TextTransparency=1
+    }):Play()
+end
+-- Luz polar em movimento no fundo, sem bloquear os controles.
+local lightBeam=create("Frame",{Name="FeixePolar",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(-.3,.5),Size=UDim2.new(.22,0,1.9,0),Rotation=27,BackgroundColor3=Color3.fromRGB(47,186,255),BackgroundTransparency=.89,BorderSizePixel=0,ZIndex=91},intro)
+create("UIGradient",{Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(.5,.3),NumberSequenceKeypoint.new(1,1)})},lightBeam)
+TweenService:Create(lightBeam,TweenInfo.new(3.7,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Position=UDim2.fromScale(1.28,.5),Rotation=-19}):Play()
+local introGlow=create("Frame",{Name="CartaoPrincipal",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.49),Size=UDim2.new(.90,0,0,328),BackgroundColor3=Color3.fromRGB(5,17,36),BackgroundTransparency=.07,BorderSizePixel=0,ZIndex=93},intro)
+round(introGlow,20)
+create("UISizeConstraint",{MaxSize=Vector2.new(560,328)},introGlow)
+local cardStroke=create("UIStroke",{Color=C.ice,Thickness=2,Transparency=.25},introGlow)
+create("UIGradient",{Rotation=90,Color=ColorSequence.new({
+    ColorSequenceKeypoint.new(0,Color3.fromRGB(12,43,77)),
+    ColorSequenceKeypoint.new(.55,Color3.fromRGB(5,22,47)),
+    ColorSequenceKeypoint.new(1,Color3.fromRGB(3,12,31))
+})},introGlow)
+local topLine=create("Frame",{Size=UDim2.new(.72,0,0,2),AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,0),BackgroundColor3=C.ice,BorderSizePixel=0,ZIndex=95},introGlow)
+create("UIGradient",{Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(.5,0),NumberSequenceKeypoint.new(1,1)})},topLine)
+local emblem=create("Frame",{Name="Emblema",AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,16),Size=UDim2.fromOffset(78,78),BackgroundColor3=Color3.fromRGB(9,53,83),BorderSizePixel=0,ZIndex=95},introGlow)
+round(emblem,22)
+local emblemStroke=create("UIStroke",{Color=C.accent,Thickness=2,Transparency=.08},emblem)
+-- Halos de cristal girando em direcoes opostas durante toda a entrada.
+local haloOuter=create("Frame",{Name="HaloExterno",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(110,110),BackgroundTransparency=1,ZIndex=94},emblem)
+local haloOuterStroke=create("UIStroke",{Color=Color3.fromRGB(58,191,255),Thickness=1.3,Transparency=.26},haloOuter)
+round(haloOuter,36)
+local haloInner=create("Frame",{Name="HaloInterno",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(94,94),BackgroundTransparency=1,ZIndex=94},emblem)
+round(haloInner,30)
+create("UIStroke",{Color=C.accent,Thickness=1.5,Transparency=.33},haloInner)
+local shard1=txt(haloOuter,"✦",20,C.ice,true)
+shard1.Position=UDim2.fromOffset(-5,-12);shard1.Size=UDim2.fromOffset(25,25);shard1.ZIndex=96
+local shard2=txt(haloInner,"✦",16,C.accent,true)
+shard2.Position=UDim2.fromOffset(75,69);shard2.Size=UDim2.fromOffset(20,20);shard2.ZIndex=96
+TweenService:Create(haloOuter,TweenInfo.new(7,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut,-1),{Rotation=360}):Play()
+TweenService:Create(haloInner,TweenInfo.new(5.1,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut,-1),{Rotation=-360}):Play()
+TweenService:Create(emblemStroke,TweenInfo.new(1.1,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Thickness=3.5,Transparency=.38}):Play()
+local introEmoji=txt(emblem,"❄",54,C.ice,true)
+introEmoji.Size=UDim2.fromScale(1,1);introEmoji.TextXAlignment=Enum.TextXAlignment.Center;introEmoji.ZIndex=97
+local introName=txt(introGlow,"FROST BLADE",35,C.text,true)
+introName.Size=UDim2.new(1,-22,0,46);introName.Position=UDim2.fromOffset(11,106)
+introName.TextXAlignment=Enum.TextXAlignment.Center;introName.TextScaled=true;introName.ZIndex=97
+local hubName=txt(introGlow,"H  U  B     •     A R C T I C    E D I T I O N",11,C.ice,true)
+hubName.Size=UDim2.new(1,-16,0,19);hubName.Position=UDim2.fromOffset(8,153)
+hubName.TextXAlignment=Enum.TextXAlignment.Center;hubName.TextScaled=true;hubName.ZIndex=97
+local introTag=txt(introGlow,"❄ INICIANDO SISTEMA GELADO ❄",12,C.accent,true)
+introTag.Size=UDim2.new(1,-24,0,24);introTag.Position=UDim2.fromOffset(12,188)
+introTag.TextXAlignment=Enum.TextXAlignment.Center;introTag.ZIndex=97
+local introMini=txt(introGlow,"Preparando interface e controles...",11,C.muted,false)
+introMini.Size=UDim2.new(1,-26,0,21);introMini.Position=UDim2.fromOffset(13,214)
+introMini.TextXAlignment=Enum.TextXAlignment.Center;introMini.ZIndex=97
+-- Pulso do emblema e do titulo; brilho superior percorre o cartao.
+TweenService:Create(cardStroke,TweenInfo.new(1.35,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{Transparency=.65,Thickness=3}):Play()
+TweenService:Create(introName,TweenInfo.new(1.55,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut,-1,true),{TextColor3=Color3.fromRGB(121,231,255)}):Play()
+local shine=create("Frame",{Name="LuzDeVarredura",Size=UDim2.new(.14,0,0,2),Position=UDim2.new(-.14,0,0,0),BackgroundColor3=C.accent,BackgroundTransparency=.09,BorderSizePixel=0,ZIndex=97},introGlow)
+create("UIGradient",{Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(.45,0),NumberSequenceKeypoint.new(1,1)})},shine)
+TweenService:Create(shine,TweenInfo.new(2.6,Enum.EasingStyle.Quad,Enum.EasingDirection.InOut,-1),{Position=UDim2.new(1,0,0,0)}):Play()
+local progressTrack=create("Frame",{Size=UDim2.new(.78,0,0,9),AnchorPoint=Vector2.new(.5,0),Position=UDim2.new(.5,0,0,249),BackgroundColor3=Color3.fromRGB(16,50,72),BorderSizePixel=0,ZIndex=97},introGlow)
+round(progressTrack,8)
+local progressFill=create("Frame",{Size=UDim2.fromScale(0,1),BackgroundColor3=C.ice,BorderSizePixel=0,ZIndex=98},progressTrack)
+round(progressFill,8)
+create("UIGradient",{Color=ColorSequence.new(Color3.fromRGB(43,139,234),Color3.fromRGB(175,252,255))},progressFill)
+local barText=txt(introGlow,"0%",12,C.text,true)
+barText.Size=UDim2.new(1,-18,0,22);barText.Position=UDim2.fromOffset(9,270)
+barText.TextXAlignment=Enum.TextXAlignment.Center;barText.ZIndex=98
+local bottomLabel=txt(introGlow,"✦  F R O S T    S Y S T E M  ✦",10,C.muted,true)
+bottomLabel.Size=UDim2.new(1,-14,0,18);bottomLabel.Position=UDim2.fromOffset(7,299)
+bottomLabel.TextXAlignment=Enum.TextXAlignment.Center;bottomLabel.TextScaled=true;bottomLabel.ZIndex=97
+-- O progresso se refere a apresentacao visual, nao a funcoes internas do jogo.
+local function progressTo(value,caption)
+    if not intro.Parent then return end
+    if caption then introMini.Text=caption end
+    TweenService:Create(progressFill,TweenInfo.new(.45,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size=UDim2.fromScale(value/100,1)}):Play()
+    barText.Text=tostring(value).."%"
+end
+-- Cronograma visual de 10 segundos (nao representa a carga real das funcoes do jogo).
+progressTo(4,"❄ Ativando o nucleo glacial...")
+task.delay(1.0,function() progressTo(14,"✦ Cristais de gelo sincronizados...") end)
+task.delay(2.0,function() progressTo(26,"❄ Despertando o FROST BLADE...") end)
+task.delay(3.0,function() progressTo(38,"✦ Preparando o painel Arctic...") end)
+task.delay(4.1,function() progressTo(50,"❄ Organizando abas e recursos...") end)
+task.delay(5.2,function() progressTo(63,"✦ Iluminando o sistema gelado...") end)
+task.delay(6.2,function() progressTo(75,"❄ Aplicando efeitos de cristal...") end)
+task.delay(7.2,function() progressTo(86,"✦ Finalizando animacoes...") end)
+task.delay(8.3,function() progressTo(95,"❄ Quase pronto para abrir...") end)
+task.delay(9.1,function() progressTo(100,"✦ Bem-vindo ao FROST BLADE HUB!") end)
+local introFinished=false
+local function finishIntro()
+    if introFinished then return end
+    introFinished=true
+    if not gui.Parent then return end
+    window.Visible=true
+    bubble.Visible=false
+    local openScale=create("UIScale",{Scale=.91},window)
+    TweenService:Create(openScale,TweenInfo.new(.48,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Scale=1}):Play()
+    task.delay(.55,function() if openScale.Parent then openScale:Destroy() end end)
+    if not intro.Parent then return end
+    progressTo(100,"❄ Painel pronto para abrir")
+    introTag.Text="✦ BEM-VINDO AO FROST BLADE HUB ✦"
+    -- Dissolve todos os elementos. Uma flag impede a introducao de aparecer novamente.
+    task.delay(.35,function()
+        if not intro.Parent then return end
+        for _,item in ipairs(intro:GetDescendants()) do
+            local prop=nil
+            if item:IsA("TextLabel") then prop={TextTransparency=1,BackgroundTransparency=1}
+            elseif item:IsA("Frame") then prop={BackgroundTransparency=1}
+            elseif item:IsA("UIStroke") then prop={Transparency=1} end
+            if prop then pcall(function() TweenService:Create(item,TweenInfo.new(.38,Enum.EasingStyle.Quad),prop):Play() end) end
+        end
+        TweenService:Create(intro,TweenInfo.new(.38,Enum.EasingStyle.Quad),{BackgroundTransparency=1}):Play()
+        task.delay(.51,function() if intro.Parent then intro:Destroy() end end)
+    end)
+end
+-- Finaliza inclusive se um efeito visual falhar; nao interfere na execucao do backend.
+task.delay(9.15,finishIntro)
+-- Fallback para liberar a tela mesmo caso uma animacao falhe.
+task.delay(10.1,function()
+    if intro.Parent then
+        window.Visible=true
+        intro:Destroy()
+    end
+end)
+local function show(value)
+    window.Visible=value
+    bubble.Visible=not value
+end
+close.MouseButton1Click:Connect(function()show(false)end)
+mini.MouseButton1Click:Connect(function()show(false)end)
+bubble.MouseButton1Click:Connect(function()show(true)end)
+UserInputService.InputBegan:Connect(function(input,processed)
+    if input.KeyCode==Enum.KeyCode.LeftControl and not UserInputService:GetFocusedTextBox() and (not intro or not intro.Parent) then show(not window.Visible) end
+end)
+-- Arrastar janela pelo cabecalho; tambem aceita touch.
+local dragging,mouseStart,firstPos=false,nil,nil
+header.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        dragging=true;mouseStart=input.Position;firstPos=window.Position
+        input.Changed:Connect(function() if input.UserInputState==Enum.UserInputState.End then dragging=false end end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) and firstPos then
+        local d=input.Position-mouseStart
+        window.Position=UDim2.new(firstPos.X.Scale,firstPos.X.Offset+d.X,firstPos.Y.Scale,firstPos.Y.Offset+d.Y)
+    end
+end)
+
+-- Todos os 334 controles anteriores sao criados pela lista fixa (pre carregada).
+local entries={
+    {"Shop", "Misc Shop", "Button", "Redeem Code"},
+    {"Shop", "Misc Shop", "Button", "Teleport Old World"},
+    {"Shop", "Misc Shop", "Button", "Teleport New World"},
+    {"Shop", "Misc Shop", "Button", "Teleport Thid Sea"},
+    {"Shop", "Misc Shop", "Button", "Buy Dual Flintlock"},
+    {"Shop", "Misc Shop", "Button", "Reroll Race"},
+    {"Shop", "Misc Shop", "Button", "Reset Stats"},
+    {"Shop", "Misc Shop", "Button", "Buy Race Cyborg"},
+    {"Shop", "Misc Shop", "Button", "Buy Race Ghoul"},
+    {"Shop", "Fighting Shop", "Toggle", "Black Leg"},
+    {"Shop", "Fighting Shop", "Toggle", "Fishman Karate"},
+    {"Shop", "Fighting Shop", "Toggle", "Electro"},
+    {"Shop", "Fighting Shop", "Toggle", "Dragon Breath"},
+    {"Shop", "Fighting Shop", "Toggle", "SuperHuman"},
+    {"Shop", "Fighting Shop", "Toggle", "Death Step"},
+    {"Shop", "Fighting Shop", "Toggle", "Sharkman Karate"},
+    {"Shop", "Fighting Shop", "Toggle", "Electric Claw"},
+    {"Shop", "Fighting Shop", "Toggle", "Dragon Talon"},
+    {"Shop", "Fighting Shop", "Toggle", "God Human"},
+    {"Shop", "Fighting Shop", "Toggle", "Sanguine Art"},
+    {"Shop", "Abilities Shop", "Button", "Skyjump [ $10,000 Beli ]"},
+    {"Shop", "Abilities Shop", "Button", "Buso Haki [ $25,000 Beli ]"},
+    {"Shop", "Abilities Shop", "Button", "Observation haki [ $750,000 Beli ]"},
+    {"Shop", "Abilities Shop", "Button", "Soru [ $100,000 Beli ]"},
+    {"LocalPlayer", "Local Player", "Toggle", "Auto Translate"},
+    {"LocalPlayer", "Local Player", "Button", "Stop Tween"},
+    {"LocalPlayer", "Local Player", "Button", "Fix UI Button Game"},
+    {"LocalPlayer", "Local Player", "Button", "Load config in Web"},
+    {"LocalPlayer", "Local Player", "Button", "Push Data To Web ( just push when join game,if push again plz rejoin )"},
+    {"LocalPlayer", "Local Player", "Button", "Show Item"},
+    {"LocalPlayer", "Local Player", "Button", "Open Devil Fruit Shop"},
+    {"LocalPlayer", "Local Player", "Button", "Open Devil Fruit Shop Mirage"},
+    {"LocalPlayer", "Local Player", "Button", "Open Title"},
+    {"LocalPlayer", "Local Player", "Button", "Open Color"},
+    {"LocalPlayer", "Local Player", "Dropdown", "Select Stats"},
+    {"LocalPlayer", "Local Player", "Toggle", "Auto Stats"},
+    {"LocalPlayer", "Local Player", "Dropdown", "Select Team"},
+    {"LocalPlayer", "Local Player", "Dropdown", "Change Team"},
+    {"LocalPlayer", "Local Player", "Toggle", "Noclip"},
+    {"LocalPlayer", "Local Player", "Dropdown", "Select Npc"},
+    {"LocalPlayer", "Local Player", "Toggle", "Teleport To Npc"},
+    {"LocalPlayer", "Local Player", "Dropdown", "Select Island"},
+    {"LocalPlayer", "Local Player", "Toggle", "Teleport To Island"},
+    {"LocalPlayer", "Local Player", "Toggle", "Teleport Mirage"},
+    {"LocalPlayer", "Local Player", "Toggle", "Teleport Prehistoric Island"},
+    {"Setting Farm", "Setting Farm", "Dropdown", "Select Weapon"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Attack No Animation "},
+    {"Setting Farm", "Setting Farm", "Toggle", "Kill Aura Only Raid And Volcano"},
+    {"Setting Farm", "Setting Farm", "Slider", "Time Delay Kill"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Auto Click"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Kill Aura With DragonStorm"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Auto Turn On Buso"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Auto Turn On Observation"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Auto Turn On V4"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Auto Turn On V3"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Auto Dodge Skill Mobs"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Teleport Y if low health"},
+    {"Setting Farm", "Setting Farm", "Slider", "% Health Player"},
+    {"Setting Farm", "Setting Farm", "Slider", "Distance Teleport Y"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Tween Safe if have Items"},
+    {"Setting Farm", "Setting Farm", "Slider", "Time Hop Server"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Use Portal Teleport"},
+    {"Setting Farm", "Setting Farm", "Slider", "Bring Mob Count"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Bring Mob"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Reset Teleport [ Beta ]"},
+    {"Setting Farm", "Setting Farm", "Toggle", "Use Submarine Teleport"},
+    {"Setting Farm", "Setting Farm", "Slider", "Speed Tween "},
+    {"Setting Farm", "Setting Farm", "Label", "Recommended: 350. If you\\226\\128\\153re farming spots close to each other, use a higher speed"},
+    {"Hold and Select Skill", "Hold Skills", "Toggle", "Use skill fast dont hold"},
+    {"Farming", "Setting Farm", "Dropdown", "Select Method Farm"},
+    {"Farming", "Setting Farm", "Slider", "Distance Farm Aura"},
+    {"Farming", "Setting Farm", "Toggle", "Ignore Attack Katakuri"},
+    {"Farming", "Setting Farm", "Toggle", "Hop Find Katakuri"},
+    {"Farming", "Setting Farm", "Toggle", "Auto Quest [Katakuri/Bone/Tyrant]"},
+    {"Farming", "Setting Farm", "Toggle", "Start Farm"},
+    {"Farming", "Mastery Farm", "Dropdown", "Select Method Farm Mastery"},
+    {"Farming", "Mastery Farm", "Slider", "Health %"},
+    {"Farming", "Mastery Farm", "Toggle", "Farm Mastery"},
+    {"Farming", "Farming Material", "Dropdown", "Select Material"},
+    {"Farming", "Farming Material", "Toggle", "Farm Material"},
+    {"Stack Farming", "Auto World", "Toggle", "Auto New World"},
+    {"Stack Farming", "Auto World", "Toggle", "Auto Third World"},
+    {"Stack Farming", "Devil Fruit", "Toggle", "Collect Chest When Server Spawn\\10God"},
+    {"Stack Farming", "Devil Fruit", "Toggle", "Teleport To Fruit"},
+    {"Stack Farming", "Devil Fruit", "Toggle", "Teleport To Fruit [ Hop Server ]"},
+    {"Stack Farming", "Event Game", "Toggle", "Auto Factory"},
+    {"Stack Farming", "Event Game", "Toggle", "Auto Pirate Raid"},
+    {"Stack Farming", "Boss Rip Indra", "Toggle", "Auto Elite Hunter"},
+    {"Stack Farming", "Boss Rip Indra", "Toggle", "Hop Server Elite Hunter"},
+    {"Stack Farming", "Boss Rip Indra", "Toggle", "Auto Touch Pad Haki"},
+    {"Stack Farming", "Boss Rip Indra", "Toggle", "Auto Summon Rip Indra"},
+    {"Stack Farming", "Boss Rip Indra", "Toggle", "Attack Rip Indra"},
+    {"Stack Farming", "Boss Soul Reaper", "Toggle", "Attack Soul Reaper"},
+    {"Stack Farming", "Boss Soul Reaper", "Toggle", "Summon Soul Reaper"},
+    {"Stack Farming", "Boss Dough King", "Toggle", "Attack Dough King"},
+    {"Stack Farming", "Boss Dough King", "Toggle", "Summon Dough King"},
+    {"Stack Farming", "Boss Dough King", "Toggle", "Hop Find Dough King"},
+    {"Stack Farming", "Boss Darkbeard", "Toggle", "Attack Darkbeard"},
+    {"Stack Farming", "Boss Darkbeard", "Toggle", "Summon Darkbeard"},
+    {"Stack Farming", "Boss Darkbeard", "Toggle", "Hop Find Darkbeard"},
+    {"Farming Other", "☢️ RISCO", "Toggle", "☢️ Kill Aura NPCs (350 studs)"},
+    {"Farming Other", "☢️ RISCO", "Slider", "Velocidade Kill Aura (golpes/s)"},
+    {"Farming Other", "Fishing", "Toggle", "Change Size Reel"},
+    {"Farming Other", "Fishing", "Toggle", "Auto Slap Battle"},
+    {"Farming Other", "Fishing", "Label", "Save Position Fishing"},
+    {"Farming Other", "Fishing", "Button", "Save Position Fishing"},
+    {"Farming Other", "Fishing", "Dropdown", "Select Bait"},
+    {"Farming Other", "Fishing", "Label", "Status Fishing :"},
+    {"Farming Other", "Fishing", "Toggle", "Auto Tween To Event Fishing Spot"},
+    {"Farming Other", "Fishing", "Toggle", "Auto Fishing"},
+    {"Farming Other", "Fishing", "Toggle", "Auto Sell Fishing"},
+    {"Farming Other", "Fishing", "Toggle", "Auto Open Chest"},
+    {"Farming Other", "Fishing", "Dropdown", "Select Quest Fishing"},
+    {"Farming Other", "Fishing", "Toggle", "Auto Accept Quest Fishing"},
+    {"Farming Other", "Attack All Mobs", "Toggle", "Auto Attack All Mob and Boss"},
+    {"Farming Other", "Attack All Mobs", "Toggle", "Auto Quest Dojo Trainer"},
+    {"Farming Other", "Attack All Mobs", "Toggle", "Auto Quest Dragon Hunter"},
+    {"Farming Other", "Berry", "Toggle", "Hop Find Berry"},
+    {"Farming Other", "Berry", "Toggle", "Auto Collect Berry"},
+    {"Farming Other", "Farm Chest", "Slider", "Value Collect Chest to Hop"},
+    {"Farming Other", "Farm Chest", "Toggle", "Auto Chest Hop"},
+    {"Farming Other", "Farm Chest", "Toggle", "Use Method Teleport [ Risk ]"},
+    {"Farming Other", "Farm Chest", "Toggle", "Auto Chest"},
+    {"Farming Other", "Raid Law", "Toggle", "Auto Buy Chip and Attack Law"},
+    {"Farming Other", "Farm Observation", "Toggle", "Auto UP Observation V2"},
+    {"Farming Other", "Farm Observation", "Toggle", "Farm Observation"},
+    {"Farming Other", "Farm Observation", "Toggle", "Farm Observation [ Hop Server ]"},
+    {"Farming Other", "Auto Kill Mob", "Dropdown", "Select Mob"},
+    {"Farming Other", "Auto Kill Mob", "Toggle", "Kill Mob"},
+    {"Farming Other", "Auto Boss", "Dropdown", "Select Boss"},
+    {"Farming Other", "Auto Boss", "Button", "Refresh Boss"},
+    {"Farming Other", "Auto Boss", "Toggle", "Kill Boss"},
+    {"Farming Other", "Auto Boss", "Toggle", "Kill All Boss"},
+    {"Farming Other", "Auto Boss", "Toggle", "Hop Server Find Boss"},
+    {"Fruit and Raid, Dungeon", "Devil Fruit", "Toggle", "Random Devil Fruit"},
+    {"Fruit and Raid, Dungeon", "Devil Fruit", "Toggle", "Auto Store Fruit"},
+    {"Fruit and Raid, Dungeon", "Devil Fruit", "Dropdown", "Blox Fruit Sniper Shop"},
+    {"Fruit and Raid, Dungeon", "Devil Fruit", "Toggle", "Buy Blox Fruit Sniper Shop"},
+    {"Fruit and Raid, Dungeon", "Raids", "Dropdown", "Select Raid"},
+    {"Fruit and Raid, Dungeon", "Raids", "Toggle", "Get Fruit In Inventory Low Beli"},
+    {"Fruit and Raid, Dungeon", "Raids", "Toggle", "Auto Raid"},
+    {"Fruit and Raid, Dungeon", "Raids", "Toggle", "Hop Sever Raid"},
+    {"Fruit and Raid, Dungeon", "Raids", "Toggle", "Auto Awake Fruit"},
+    {"Fruit and Raid, Dungeon", "Multi Raid", "Dropdown", "Select Player Multi Raid"},
+    {"Fruit and Raid, Dungeon", "Multi Raid", "Button", "Refresh Player"},
+    {"Fruit and Raid, Dungeon", "Multi Raid", "Toggle", "Account Buy Chip"},
+    {"Fruit and Raid, Dungeon", "Multi Raid", "Toggle", "Account Pick Slot Raid"},
+    {"Fruit and Raid, Dungeon", "Multi Raid", "Toggle", "Auto Multi Raid"},
+    {"Fruit and Raid, Dungeon", "Join Dungeon", "Dropdown", "Select Account Join"},
+    {"Fruit and Raid, Dungeon", "Join Dungeon", "Button", "Refresh Player"},
+    {"Fruit and Raid, Dungeon", "Join Dungeon", "Slider", "Min Player Join Dungeon"},
+    {"Fruit and Raid, Dungeon", "Join Dungeon", "Dropdown", "Select Difficulty"},
+    {"Fruit and Raid, Dungeon", "Join Dungeon", "Toggle", "Account Start Dungeon"},
+    {"Fruit and Raid, Dungeon", "Join Dungeon", "Toggle", "Auto Join Dungeon"},
+    {"Fruit and Raid, Dungeon", "Dungeon", "Dropdown", "Select Weapon Dungeon"},
+    {"Fruit and Raid, Dungeon", "Dungeon", "Dropdown", "Select Card Priority"},
+    {"Fruit and Raid, Dungeon", "Dungeon", "Toggle", "Auto Attack Dungeon"},
+    {"Fruit and Raid, Dungeon", "Dungeon", "Toggle", "Auto Pick Card Dungeon"},
+    {"Sea Event", "Setting", "Dropdown", "Select Zone"},
+    {"Sea Event", "Setting", "Dropdown", "Select Sea Events"},
+    {"Sea Event", "Setting", "Dropdown", "Select Boat"},
+    {"Sea Event", "Setting", "Dropdown", "Select Weapons Use Skill"},
+    {"Sea Event", "Setting", "Toggle", "Use Dragonstorm For Sea Event"},
+    {"Sea Event", "Setting", "Toggle", "Use Click M1 Skull Guitar For Sea Event"},
+    {"Sea Event", "Setting", "Toggle", "Auto Change Dragonstorm With Skull Guitar"},
+    {"Sea Event", "Setting", "Toggle", "Auto Change Dragonstorm When Kill Boat"},
+    {"Sea Event", "Setting", "Toggle", "Use Click M1 Fruit For Sea Event"},
+    {"Sea Event", "Setting", "Toggle", "Reset Character Buy Boat"},
+    {"Sea Event", "Setting", "Toggle", "Auto Dodge Skill Terrorshark"},
+    {"Sea Event", "Setting", "Toggle", "Auto Dodge Skill Seabeast"},
+    {"Sea Event", "Setting", "Toggle", "Teleport Boat Other CFrame if Rough Sea"},
+    {"Sea Event", "Setting", "Toggle", "Tween Until Have Sea Event"},
+    {"Sea Event", "Setting", "Toggle", "Will Back When over 10km"},
+    {"Sea Event", "Farming", "Dropdown", "Select Friend"},
+    {"Sea Event", "Farming", "Button", "Refresh Player"},
+    {"Sea Event", "Farming", "Toggle", "Auto Sea Event With Friend"},
+    {"Sea Event", "Farming", "Toggle", "Auto Repair Ur Ship"},
+    {"Sea Event", "Farming", "Toggle", "Auto Sea Event"},
+    {"Sea Event", "Farming", "Toggle", "Auto Find Mirage"},
+    {"Sea Event", "Kitsune Event", "Toggle", "Teleport To Kitsune Island"},
+    {"Sea Event", "Kitsune Event", "Toggle", "Hop Server [ Next Night or Near Full Moon > 2m ]"},
+    {"Sea Event", "Kitsune Event", "Toggle", "Auto Spawn Kitsune Island"},
+    {"Sea Event", "Kitsune Event", "Toggle", "Auto Summon Soul Ember"},
+    {"Sea Event", "Kitsune Event", "Toggle", "Auto Collect Soul Ember"},
+    {"Sea Event", "Kitsune Event", "Slider", "Values Azure Ember"},
+    {"Sea Event", "Kitsune Event", "Toggle", "Auto Trade Azure Ember"},
+    {"Sea Event", "Leviathan Event", "Button", "Buy Spy"},
+    {"Sea Event", "Leviathan Event", "Button", "Teleport your boat to current Position"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Buy Spy"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Buy Boat Beast Hunter"},
+    {"Sea Event", "Leviathan Event", "Dropdown", "Select Owner Boat Find Leviathan"},
+    {"Sea Event", "Leviathan Event", "Button", "Refresh Player"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Multi Find Leviathan"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Find Leviathan"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Start Leviathan"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Destroy IDK"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Attack Multi Segments Leviathan"},
+    {"Sea Event", "Leviathan Event", "Slider", "Value Damage Multi Segments"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Attack Leviathan"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Use Click M1 Fruit Leviathan"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Use Click M1 Skull Guitar Leviathan"},
+    {"Sea Event", "Leviathan Event", "Dropdown", "Select Owner Boat Beast Hunter Shoot Heart"},
+    {"Sea Event", "Leviathan Event", "Button", "Refresh Player"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Use Your Boat Beast Hunter"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Auto Fire Shoot Heart Leviathan"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Teleport Frozen Dimension"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Tween Boat To Frozen Dimension"},
+    {"Sea Event", "Leviathan Event", "Slider", "Speed Boat Auto Drive"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Drive Boat To Tiki"},
+    {"Sea Event", "Leviathan Event", "Toggle", "Drive Boat To Hydra"},
+    {"Sea Event", "Boat Setting", "Toggle", "Fly Boat"},
+    {"Sea Event", "Boat Setting", "Slider", "Value Speed Boat"},
+    {"Sea Event", "Boat Setting", "Slider", "Value Speed Tween Boat"},
+    {"Sea Event", "Boat Setting", "Slider", "Value Speed Fly Boat"},
+    {"Sea Event", "Boat Setting", "Toggle", "Change Speed Boat"},
+    {"Upgrade Race", "Race Draco", "Toggle", "Auto Upgrade Race V2-V3 Draco"},
+    {"Upgrade Race", "Race Draco", "Label", "Acient One Draco Status"},
+    {"Upgrade Race", "Race Draco", "Toggle", "Auto Trial Draco"},
+    {"Upgrade Race", "Race Draco", "Toggle", "Fully Trial Draco"},
+    {"Upgrade Race", "Race Draco", "Toggle", "Ignore Craft Volcanic Magnet [ Fully Draco ]"},
+    {"Upgrade Race", "Race Draco", "Toggle", "Auto Buy Gear Draco"},
+    {"Upgrade Race", "Race Draco", "Toggle", "Auto Finish Train Draco Quest"},
+    {"Upgrade Race", "Race Normal", "Toggle", "Auto Upgrade Race V2-V3"},
+    {"Upgrade Race", "Race Normal", "Toggle", "Auto Get Fully Cyborg"},
+    {"Upgrade Race", "Race Normal", "Toggle", "Auto Get Cyborg Hop Collect Chest"},
+    {"Upgrade Race", "Race Normal", "Toggle", "Auto Get Cyborg"},
+    {"Upgrade Race", "Race Normal", "Toggle", "Hop Server Find Boss Cursed Captain"},
+    {"Upgrade Race", "Race Normal", "Toggle", "Auto Get Ghoul"},
+    {"Upgrade Race", "Race V4", "Toggle", "No Frog"},
+    {"Upgrade Race", "Race V4", "Toggle", "Teleport Acient Clock"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Buy Gear"},
+    {"Upgrade Race", "Race V4", "Dropdown", "Select Gear V4"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Choose Gears"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Finish Train Quest"},
+    {"Upgrade Race", "Race V4", "Toggle", "Stack Train With Trial Race"},
+    {"Upgrade Race", "Race V4", "Toggle", "Hop Server [Trial Or Pull Lever]"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Pull Lever"},
+    {"Upgrade Race", "Race V4", "Dropdown", "Select Players Multi"},
+    {"Upgrade Race", "Race V4", "Button", "Refresh Player"},
+    {"Upgrade Race", "Race V4", "Toggle", "Multi Trial"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Reset Character"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Trial"},
+    {"Upgrade Race", "Race V4", "Toggle", "Auto Turn On V3 Near Door"},
+    {"Upgrade Race", "Kill Trial", "Dropdown", "Select Weapon Attack Trial"},
+    {"Upgrade Race", "Kill Trial", "Toggle", "Kill players When complete Trial"},
+    {"Upgrade Race", "Kill Trial", "Toggle", "Use Skill when Kill Player"},
+    {"Upgrade Race", "Kill Trial", "Toggle", "Just Use Skill when Player Active Ken"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Trade Bone"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Buy Legendary Sword"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Buy Haki Color"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Hop Server [ Haki color or Legendary Sword]"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Get Rainbow Haki"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Soul Guitar"},
+    {"Get and Upgrade Items", "Get Items", "Dropdown", "Select Method Hop CDK"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto CDK"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Yama"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Tushita"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto TTK"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Saber"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Craft Item Shark Anchor"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Yoru Mini"},
+    {"Get and Upgrade Items", "Get Items", "Toggle", "Auto Yoru Mini (Hop Server)"},
+    {"Get and Upgrade Items", "Mastery Weapon", "Toggle", "Auto Farm Mastery 600 Melees"},
+    {"Get and Upgrade Items", "Mastery Weapon", "Toggle", "Auto Farm Mastery 600 Sword In Inventory"},
+    {"Get and Upgrade Items", "Upgrade Weapon", "Toggle", "Auto Upgrade Sword Inventory"},
+    {"Get and Upgrade Items", "Upgrade Weapon", "Toggle", "Auto Upgrade Gun Inventory"},
+    {"Volcano Event", "Settings Volcano", "Dropdown", "Select Weapon Kill Golem"},
+    {"Volcano Event", "Settings Volcano", "Dropdown", "Select Weapons Fix Lava"},
+    {"Volcano Event", "Settings Volcano", "Dropdown", "Select Method Kill Golem"},
+    {"Volcano Event", "Farming Volcano", "Toggle", "Auto Crafting Volcanic Magnet"},
+    {"Volcano Event", "Farming Volcano", "Toggle", "Auto Find Prehistoric Island"},
+    {"Volcano Event", "Farming Volcano", "Toggle", "Auto Event Prehistoric Island"},
+    {"Volcano Event", "Farming Volcano", "Toggle", "Auto Collect Bone"},
+    {"Volcano Event", "Farming Volcano", "Toggle", "Auto Collect Egg"},
+    {"Volcano Event", "Fully Volcano", "Toggle", "Ignore Craft Volcanic Magnet [ Fully ]"},
+    {"Volcano Event", "Fully Volcano", "Toggle", "Ignore Collect Bone [ Fully ]"},
+    {"Volcano Event", "Fully Volcano", "Toggle", "Fully Event Prehistoric Island"},
+    {"PVP", "PVP", "Dropdown", "Select Player PVP"},
+    {"PVP", "PVP", "Dropdown", "Select Method Aimbot"},
+    {"PVP", "PVP", "Button", "Refresh Player"},
+    {"PVP", "PVP", "Toggle", "Teleport Player"},
+    {"PVP", "PVP", "Toggle", "Auto Aimbot"},
+    {"PVP", "PVP", "Toggle", "Auto Aimbot Gun"},
+    {"PVP", "MISC PVP", "Slider", "Input WalkSpeed"},
+    {"PVP", "MISC PVP", "Slider", "Input JumpPower"},
+    {"PVP", "MISC PVP", "Toggle", "Change JumpPower"},
+    {"PVP", "MISC PVP", "Toggle", "Change WalkSpeed"},
+    {"PVP", "MISC PVP", "Toggle", "Walk On Water"},
+    {"Setting", "Settings", "Toggle", "White Screen"},
+    {"Setting", "Settings", "Toggle", "Black Screen"},
+    {"Setting", "Settings", "Toggle", "Remove Notifications"},
+    {"Setting", "Settings", "Toggle", "Auto rejoin Disconnect"},
+    {"Setting", "Settings", "Toggle", "Auto Load Script"},
+    {"Setting", "Settings", "Toggle", "Boost Fps"},
+    {"Setting", "Settings", "Button", "Copy Config"},
+    {"Setting", "Settings", "Bind", "Toggle GUI"},
+}
+-- LANGUAGE ENGINE: display-only translation, original callback names never change.
+local LANGUAGE_CHOICES={
+    {code="pt",flag="🇧🇷",name="Português (Brasil)"},
+    {code="en",flag="🇺🇸",name="English"},
+    {code="es",flag="🇪🇸",name="Español"},
+    {code="fr",flag="🇫🇷",name="Français"},
+    {code="de",flag="🇩🇪",name="Deutsch"},
+    {code="it",flag="🇮🇹",name="Italiano"},
+}
+-- V9: preferências persistentes do MENU (independentes do Settings original).
+-- Exige suporte real a readfile/writefile no ambiente executor. O Roblox Studio
+-- nao oferece essas funcoes em LocalScript: nesse caso so vale ate sair da sessao.
+local PreferenceHTTP=game:GetService("HttpService")
+local PreferencePath="FROST_BLADE_HUB_PREFERENCIAS_"..tostring(player.UserId)..".json"
+local PreferenceDisk=(type(readfile)=="function" and type(writefile)=="function")
+local PreferenceState={Version=1,Language="pt",LastPage="",Controls={}}
+local PreferenceLoaded=false
+local PreferenceWriteError=nil
+local function PreferenceCopy(value,depth,seen)
+    depth=depth or 0
+    if depth>7 then return nil end
+    local kind=type(value)
+    if kind=="boolean" or kind=="string" then return value end
+    if kind=="number" then
+        if value~=value or value==math.huge or value==-math.huge then return nil end
+        return value
+    end
+    if kind~="table" then return nil end
+    seen=seen or {}
+    if seen[value] then return nil end
+    seen[value]=true
+    local out={}
+    local count=0
+    for k,v in pairs(value) do
+        if (type(k)=="string" or (type(k)=="number" and k>=1 and k%1==0)) and count<100 then
+            local safe=PreferenceCopy(v,depth+1,seen)
+            if safe~=nil then out[k]=safe; count+=1 end
+        end
+    end
+    seen[value]=nil
+    return out
+end
+local function PreferenceLoad()
+    if not PreferenceDisk then return end
+    local ok,raw=pcall(readfile,PreferencePath)
+    if not ok or type(raw)~="string" or #raw==0 then return end
+    local parsedOK,data=pcall(function()return PreferenceHTTP:JSONDecode(raw)end)
+    if parsedOK and type(data)=="table" and type(data.Controls)=="table" then
+        PreferenceState.Controls=data.Controls
+        if type(data.Language)=="string" then PreferenceState.Language=data.Language end
+        if type(data.LastPage)=="string" then PreferenceState.LastPage=data.LastPage end
+        PreferenceLoaded=true
+    else
+        warn("[FROST BLADE] Arquivo de preferencias invalido; nao foi possivel restaurar o estado.")
+    end
+end
+PreferenceLoad()
+local function PreferenceSave()
+    if not PreferenceDisk then return false end
+    local ok,data=pcall(function() return PreferenceHTTP:JSONEncode(PreferenceState) end)
+    if not ok then PreferenceWriteError=tostring(data);return false end
+    local saved,err=pcall(writefile,PreferencePath,data)
+    if not saved then
+        PreferenceWriteError=tostring(err)
+        warn("[FROST BLADE] Falha ao salvar preferencias: "..PreferenceWriteError)
+        return false
+    end
+    -- Um writefile substituido por um no-op pode retornar sucesso falso.
+    -- Confirmar a leitura impede prometer salvamento onde nao existe.
+    local verified,contents=pcall(readfile,PreferencePath)
+    if not verified or contents~=data then
+        PreferenceWriteError="Falha na verificacao do arquivo salvo"
+        warn("[FROST BLADE] writefile/readfile nao confirmaram persistencia local")
+        return false
+    end
+    PreferenceWriteError=nil
+    return true
+end
+local function PreferenceKey(f)
+    -- Chave com aba+secao+tipo+nome: titulos iguais em abas diferentes nao colidem.
+    return f.Page_Name.."\1"..f.Section_Name.."\1"..f.Type.."\1"..f.Title
+end
+local function PreferenceRecord(f,value)
+    if f.Type=="button" or f.Type=="textlabel" or f.Type=="bind" then return end
+    local safe=PreferenceCopy(value)
+    if safe==nil then return end
+    PreferenceState.Controls[PreferenceKey(f)]=safe
+    PreferenceSave() -- confirma o estado na hora do clique; nao perde ao sair rapido
+end
+local function PreferenceStatus()
+    if not PreferenceDisk then return "⚠ Este ambiente nao oferece readfile/writefile; preferencias so nesta execucao." end
+    if PreferenceWriteError then return "⚠ Nao foi possivel gravar no arquivo de preferencias. Consulte Output/F9." end
+    return PreferenceLoaded and "💾 Preferencias encontradas e carregadas do arquivo local." or "💾 Salvamento automatico local ativado; configuracoes ficam no arquivo deste usuario."
+end
+local CURRENT_LANG=PreferenceLoaded and PreferenceState.Language or (_G.FrostBladeLanguage or "pt")
+if not table.find({"pt","en","es","fr","de","it"},CURRENT_LANG) then CURRENT_LANG="pt" end
+PreferenceState.Language=CURRENT_LANG
+
+local UI_WORDS={
+pt={nav="NAVEGAÇÃO",language="IDIOMAS",choose="ESCOLHA SEU IDIOMA",help="Escolha uma língua para traduzir os textos do menu. Nomes de itens do jogo são preservados.",search="Pesquisar função...",count="controles",ready="conectados",pending="aguardando",missing="Nenhuma função encontrada nesta aba.",select="Selecionar",use="USAR",on="LIGADO",off="DESLIGADO",loading="Função ainda não carregada: ",failure="Erro ao executar: ",chooseOptions="Opções não disponíveis",connected="Controles conectados",settings="AJUSTES",skills="HABILIDADES",player="JOGADOR",items="ITENS",fruits="FRUTAS E RAIDS",seas="EVENTOS DO MAR",races="RAÇAS",volcano="VULCÃO",pvp="PVP",farm="FARM AUTOMÁTICO",advanced="FARM AVANÇADO",extra="FARM EXTRA",store="LOJA",config="CONFIG. FARM",intro="SISTEMA GELADO INICIANDO",introHelp="Preparando interface e controles...",languageSet="Idioma alterado: "},
+en={nav="NAVIGATION",language="LANGUAGES",choose="CHOOSE A LANGUAGE",help="Choose a language to translate the menu labels. In-game item names remain unchanged.",search="Search features...",count="controls",ready="connected",pending="waiting",missing="No features found in this tab.",select="Select",use="USE",on="ON",off="OFF",loading="Feature not loaded yet: ",failure="Feature error: ",chooseOptions="No options available",connected="Connected controls",settings="SETTINGS",skills="SKILLS",player="PLAYER",items="ITEMS",fruits="FRUITS & RAIDS",seas="SEA EVENTS",races="RACES",volcano="VOLCANO",pvp="PVP",farm="AUTO FARM",advanced="ADVANCED FARM",extra="EXTRA FARM",store="SHOP",config="FARM SETTINGS",intro="STARTING FROST SYSTEM",introHelp="Preparing interface and controls...",languageSet="Language changed: "},
+es={nav="NAVEGACIÓN",language="IDIOMAS",choose="ELIGE UN IDIOMA",help="Elige un idioma para traducir el menú. Se mantienen los nombres propios del juego.",search="Buscar funciones...",count="controles",ready="conectados",pending="esperando",missing="No se encontraron funciones en esta pestaña.",select="Seleccionar",use="USAR",on="ACTIVO",off="APAGADO",loading="Función aún no cargada: ",failure="Error de función: ",chooseOptions="No hay opciones",connected="Controles conectados",settings="AJUSTES",skills="HABILIDADES",player="JUGADOR",items="OBJETOS",fruits="FRUTAS Y RAIDS",seas="EVENTOS MARINOS",races="RAZAS",volcano="VOLCÁN",pvp="PVP",farm="FARMEAR AUTOMÁTICO",advanced="FARM AVANZADO",extra="FARM EXTRA",store="TIENDA",config="CONFIG. FARM",intro="INICIANDO SISTEMA HELADO",introHelp="Preparando el menú y controles...",languageSet="Idioma cambiado: "},
+fr={nav="NAVIGATION",language="LANGUES",choose="CHOISIR UNE LANGUE",help="Choisissez la langue des libellés du menu. Les noms du jeu restent inchangés.",search="Rechercher une fonction...",count="contrôles",ready="connectés",pending="en attente",missing="Aucune fonction dans cet onglet.",select="Sélectionner",use="UTILISER",on="ACTIF",off="ARRÊT",loading="Fonction non chargée : ",failure="Erreur de fonction : ",chooseOptions="Aucune option",connected="Contrôles connectés",settings="PARAMÈTRES",skills="COMPÉTENCES",player="JOUEUR",items="OBJETS",fruits="FRUITS ET RAIDS",seas="ÉVÉNEMENTS MARINS",races="RACES",volcano="VOLCAN",pvp="PVP",farm="FARM AUTOMATIQUE",advanced="FARM AVANCÉ",extra="FARM EXTRA",store="BOUTIQUE",config="CONFIG. FARM",intro="DÉMARRAGE DU SYSTÈME GLACÉ",introHelp="Préparation du menu et des fonctions...",languageSet="Langue modifiée : "},
+de={nav="NAVIGATION",language="SPRACHEN",choose="SPRACHE AUSWÄHLEN",help="Wähle die Sprache der Menütexte. Eigennamen des Spiels bleiben unverändert.",search="Funktion suchen...",count="Steuerungen",ready="verbunden",pending="wartend",missing="Keine Funktionen in diesem Tab gefunden.",select="Auswählen",use="NUTZEN",on="AN",off="AUS",loading="Funktion noch nicht geladen: ",failure="Funktionsfehler: ",chooseOptions="Keine Optionen verfügbar",connected="Verbundene Steuerungen",settings="EINSTELLUNGEN",skills="FÄHIGKEITEN",player="SPIELER",items="GEGENSTÄNDE",fruits="FRÜCHTE & RAIDS",seas="MEER-EREIGNISSE",races="RASSEN",volcano="VULKAN",pvp="PVP",farm="AUTO FARM",advanced="FORTGESCHRITTENE FARM",extra="EXTRA FARM",store="SHOP",config="FARM-EINSTELLUNGEN",intro="FROST-SYSTEM WIRD GESTARTET",introHelp="Menü und Steuerungen werden vorbereitet...",languageSet="Sprache geändert: "},
+it={nav="NAVIGAZIONE",language="LINGUE",choose="SCEGLI UNA LINGUA",help="Seleziona la lingua del menu. I nomi propri del gioco non vengono modificati.",search="Cerca funzione...",count="controlli",ready="collegati",pending="in attesa",missing="Nessuna funzione trovata in questa scheda.",select="Seleziona",use="USA",on="ATTIVO",off="SPENTO",loading="Funzione non ancora caricata: ",failure="Errore funzione: ",chooseOptions="Nessuna opzione",connected="Controlli collegati",settings="IMPOSTAZIONI",skills="ABILITÀ",player="GIOCATORE",items="OGGETTI",fruits="FRUTTI E RAID",seas="EVENTI MARINI",races="RAZZE",volcano="VULCANO",pvp="PVP",farm="FARM AUTOMATICO",advanced="FARM AVANZATO",extra="FARM EXTRA",store="NEGOZIO",config="CONFIG. FARM",intro="AVVIO DEL SISTEMA GELIDO",introHelp="Preparazione del menu e dei controlli...",languageSet="Lingua cambiata: "}
+}
+-- Longer phrases go first, preventing partial translations of important labels.
+local DICTIONARY={
+pt={
+["Auto Collect"]="Coletar automaticamente",["Auto Get"]="Obter automaticamente",["Auto Buy"]="Comprar automaticamente",["Auto Attack"]="Atacar automaticamente",["Auto Upgrade"]="Melhorar automaticamente",["Auto Find"]="Encontrar automaticamente",["Auto Farm"]="Farm automático",["Auto Quest"]="Missão automática",["Auto Summon"]="Invocar automaticamente",["Auto Join"]="Entrar automaticamente",["Auto Start"]="Iniciar automaticamente",["Auto Store"]="Guardar automaticamente",["Auto Trade"]="Trocar automaticamente",["Auto Open"]="Abrir automaticamente",["Auto Awake"]="Despertar automaticamente",["Auto Finish"]="Concluir automaticamente",["Auto Teleport"]="Teleportar automaticamente",["Select Method"]="Selecionar método",["Select Weapon"]="Selecionar arma",["Select Material"]="Selecionar material",["Select Skills"]="Selecionar habilidades",["Select Boss"]="Selecionar chefe",["Select Mob"]="Selecionar monstro",["Select Race"]="Selecionar raça",["Select Fruit"]="Selecionar fruta",["Select Island"]="Selecionar ilha",["Select Team"]="Selecionar time",["Select Stats"]="Selecionar atributos",["Farm Mastery"]="Farm de maestria",["Mastery Farm"]="Farm de maestria",["Farm Material"]="Farm de materiais",["Start Farm"]="Iniciar farm",["Stop Tween"]="Parar movimento",["Buy Race"]="Comprar raça",["Buy Item"]="Comprar item",["Kill All"]="Derrotar todos",["Kill Boss"]="Derrotar chefe",["Kill Mob"]="Derrotar monstro",["Show Item"]="Mostrar itens",["Show"]="Mostrar",["Open"]="Abrir",["Collect"]="Coletar",["Teleport"]="Teleportar",["Refresh"]="Atualizar",["Reset"]="Redefinir",["Redeem"]="Resgatar",["Fruit"]="Fruta",["Fruits"]="Frutas",["Quest"]="Missão",["Island"]="Ilha",["World"]="Mundo",["Sea"]="Mar",["Boss"]="Chefe",["Weapon"]="Arma",["Material"]="Material",["Mastery"]="Maestria",["Speed"]="Velocidade",["Distance"]="Distância",["Time"]="Tempo",["Delay"]="Atraso",["Health"]="Vida",["Player"]="Jogador",["Level"]="Nível",["Items"]="Itens",["Settings"]="Configurações",["Shop"]="Loja",["Fishing"]="Pesca",["Chest"]="Baú",["Sword"]="Espada",["Gun"]="Arma de fogo",["Attack"]="Ataque",["Skill"]="Habilidade",["Skills"]="Habilidades",["Fast"]="Rápido",["Hop"]="Trocar servidor",["Buy"]="Comprar",["Get"]="Obter",["Find"]="Encontrar",["Change"]="Mudar",["Use"]="Usar",["Auto"]="Automático",["All"]="Todos",["Farm"]="Farm"},
+es={
+["Auto Collect"]="Recoger automáticamente",["Auto Get"]="Obtener automáticamente",["Auto Buy"]="Comprar automáticamente",["Auto Attack"]="Atacar automáticamente",["Auto Upgrade"]="Mejorar automáticamente",["Auto Find"]="Encontrar automáticamente",["Auto Farm"]="Farm automático",["Auto Quest"]="Misión automática",["Auto Summon"]="Invocar automáticamente",["Auto Join"]="Entrar automáticamente",["Auto Start"]="Iniciar automáticamente",["Auto Store"]="Guardar automáticamente",["Auto Trade"]="Intercambiar automáticamente",["Auto Open"]="Abrir automáticamente",["Select Method"]="Seleccionar método",["Select Weapon"]="Seleccionar arma",["Select Material"]="Seleccionar material",["Select Boss"]="Seleccionar jefe",["Select Mob"]="Seleccionar monstruo",["Select Fruit"]="Seleccionar fruta",["Select Island"]="Seleccionar isla",["Farm Mastery"]="Farm de maestría",["Farm Material"]="Farm de materiales",["Start Farm"]="Iniciar farm",["Kill All"]="Derrotar a todos",["Show"]="Mostrar",["Open"]="Abrir",["Collect"]="Recoger",["Teleport"]="Teletransportar",["Refresh"]="Actualizar",["Reset"]="Restablecer",["Redeem"]="Canjear",["Fruit"]="Fruta",["Fruits"]="Frutas",["Quest"]="Misión",["Island"]="Isla",["World"]="Mundo",["Sea"]="Mar",["Boss"]="Jefe",["Weapon"]="Arma",["Material"]="Material",["Mastery"]="Maestría",["Speed"]="Velocidad",["Distance"]="Distancia",["Time"]="Tiempo",["Delay"]="Retraso",["Health"]="Salud",["Player"]="Jugador",["Level"]="Nivel",["Items"]="Objetos",["Settings"]="Ajustes",["Shop"]="Tienda",["Fishing"]="Pesca",["Chest"]="Cofre",["Sword"]="Espada",["Gun"]="Arma",["Attack"]="Ataque",["Skills"]="Habilidades",["Skill"]="Habilidad",["Fast"]="Rápido",["Hop"]="Cambiar servidor",["Buy"]="Comprar",["Get"]="Obtener",["Find"]="Encontrar",["Change"]="Cambiar",["Use"]="Usar",["Auto"]="Automático",["All"]="Todos",["Farm"]="Farm"},
+fr={
+["Auto Collect"]="Collecte auto",["Auto Get"]="Obtenir auto",["Auto Buy"]="Acheter auto",["Auto Attack"]="Attaque auto",["Auto Upgrade"]="Améliorer auto",["Auto Farm"]="Farm auto",["Auto Quest"]="Quête auto",["Select"]="Choisir",["Start Farm"]="Démarrer farm",["Show"]="Afficher",["Open"]="Ouvrir",["Collect"]="Collecter",["Teleport"]="Téléporter",["Reset"]="Réinitialiser",["Fruit"]="Fruit",["Fruits"]="Fruits",["Quest"]="Quête",["Island"]="Île",["World"]="Monde",["Sea"]="Mer",["Boss"]="Boss",["Weapon"]="Arme",["Material"]="Matériau",["Mastery"]="Maîtrise",["Speed"]="Vitesse",["Distance"]="Distance",["Time"]="Temps",["Delay"]="Délai",["Health"]="Santé",["Player"]="Joueur",["Level"]="Niveau",["Items"]="Objets",["Settings"]="Réglages",["Shop"]="Boutique",["Fishing"]="Pêche",["Chest"]="Coffre",["Sword"]="Épée",["Attack"]="Attaque",["Skills"]="Compétences",["Skill"]="Compétence",["Buy"]="Acheter",["Get"]="Obtenir",["Find"]="Trouver",["Use"]="Utiliser",["Auto"]="Auto",["All"]="Tous",["Farm"]="Farm"},
+de={
+["Auto Collect"]="Auto sammeln",["Auto Get"]="Auto erhalten",["Auto Buy"]="Auto kaufen",["Auto Attack"]="Auto angreifen",["Auto Upgrade"]="Auto verbessern",["Auto Farm"]="Auto Farm",["Auto Quest"]="Auto Auftrag",["Select"]="Auswählen",["Start Farm"]="Farm starten",["Show"]="Anzeigen",["Open"]="Öffnen",["Collect"]="Sammeln",["Teleport"]="Teleportieren",["Reset"]="Zurücksetzen",["Fruit"]="Frucht",["Fruits"]="Früchte",["Quest"]="Auftrag",["Island"]="Insel",["World"]="Welt",["Sea"]="Meer",["Boss"]="Boss",["Weapon"]="Waffe",["Material"]="Material",["Mastery"]="Meisterschaft",["Speed"]="Tempo",["Distance"]="Entfernung",["Time"]="Zeit",["Delay"]="Verzögerung",["Health"]="Leben",["Player"]="Spieler",["Level"]="Level",["Items"]="Gegenstände",["Settings"]="Einstellungen",["Shop"]="Shop",["Fishing"]="Angeln",["Chest"]="Truhe",["Sword"]="Schwert",["Attack"]="Angriff",["Skills"]="Fähigkeiten",["Skill"]="Fähigkeit",["Buy"]="Kaufen",["Get"]="Erhalten",["Find"]="Finden",["Use"]="Nutzen",["Auto"]="Auto",["All"]="Alle",["Farm"]="Farm"},
+it={
+["Auto Collect"]="Raccogli auto",["Auto Get"]="Ottieni auto",["Auto Buy"]="Acquista auto",["Auto Attack"]="Attacca auto",["Auto Upgrade"]="Migliora auto",["Auto Farm"]="Farm automatico",["Auto Quest"]="Missione automatica",["Select"]="Seleziona",["Start Farm"]="Avvia farm",["Show"]="Mostra",["Open"]="Apri",["Collect"]="Raccogli",["Teleport"]="Teletrasporta",["Reset"]="Reimposta",["Fruit"]="Frutto",["Fruits"]="Frutti",["Quest"]="Missione",["Island"]="Isola",["World"]="Mondo",["Sea"]="Mare",["Boss"]="Boss",["Weapon"]="Arma",["Material"]="Materiale",["Mastery"]="Maestria",["Speed"]="Velocità",["Distance"]="Distanza",["Time"]="Tempo",["Delay"]="Ritardo",["Health"]="Vita",["Player"]="Giocatore",["Level"]="Livello",["Items"]="Oggetti",["Settings"]="Impostazioni",["Shop"]="Negozio",["Fishing"]="Pesca",["Chest"]="Forziere",["Sword"]="Spada",["Attack"]="Attacco",["Skills"]="Abilità",["Skill"]="Abilità",["Buy"]="Compra",["Get"]="Ottieni",["Find"]="Trova",["Use"]="Usa",["Auto"]="Auto",["All"]="Tutti",["Farm"]="Farm"}
+}
+local function W(k)
+    return (UI_WORDS[CURRENT_LANG] and UI_WORDS[CURRENT_LANG][k]) or UI_WORDS.pt[k] or k
+end
+local SORTED_RULES={}
+for language,rules in pairs(DICTIONARY) do
+    local out={}
+    for before,after in pairs(rules) do table.insert(out,{before,after}) end
+    table.sort(out,function(a,b) return #a[1]>#b[1] end)
+    SORTED_RULES[language]=out
+end
+local function translated(str)
+    local raw=tostring(str or "")
+    if CURRENT_LANG=="en" then return raw end
+    local rules=SORTED_RULES[CURRENT_LANG] or SORTED_RULES.pt
+    local out=raw
+    -- Whole-word matching avoids corrupting item names such as Dragon or special internal tokens.
+    for _,rule in ipairs(rules) do
+        local pat="%f[%w]"..rule[1]:gsub("([^%w%s])","%%%1"):gsub("%s+","%%s+").."%f[%W]"
+        out=out:gsub(pat,function()return rule[2] end)
+    end
+    return out
+end
+local function translatedPage(page)
+    if page=="Languages" then return "🌐 "..W("language") end
+    local key={Shop="store",LocalPlayer="player",["Setting Farm"]="config",["Hold and Select Skill"]="skills",Farming="farm",["Stack Farming"]="advanced",["Farming Other"]="extra",["Fruit and Raid, Dungeon"]="fruits",["Sea Event"]="seas",["Upgrade Race"]="races",["Get and Upgrade Items"]="items",["Volcano Event"]="volcano",PVP="pvp",Setting="settings"}
+    local icon={Shop="🛒",LocalPlayer="👤",["Setting Farm"]="⚙",["Hold and Select Skill"]="⚔",Farming="❄",["Stack Farming"]="☄",["Farming Other"]="⚡",["Fruit and Raid, Dungeon"]="🍈",["Sea Event"]="🌊",["Upgrade Race"]="🧬",["Get and Upgrade Items"]="🗡",["Volcano Event"]="🌋",PVP="🎯",Setting="🛠"}
+    return (icon[page] or "❄").." "..(key[page] and W(key[page]) or translated(page))
+end
+
+local aliases={Shop="🛒 LOJA",LocalPlayer="👤 JOGADOR",["Setting Farm"]="⚙ CONFIG. FARM",["Hold and Select Skill"]="⚔ HABILIDADES",Farming="❄ AUTO FARM",["Stack Farming"]="☄ FARM AVANÇADO",["Farming Other"]="⚡ FARM EXTRA",["Fruit and Raid, Dungeon"]="🍈 FRUTAS & RAIDS",["Sea Event"]="🌊 EVENTOS DO MAR",["Upgrade Race"]="🧬 RAÇAS",["Get and Upgrade Items"]="🗡 ITENS",["Volcano Event"]="🌋 VULCÃO",PVP="🎯 PVP",Setting="🛠 AJUSTES"}
+local HIDDEN_PAGES={ESP=true,["Tab Webhook"]=true,["Status And Server"]=true}
+local HIDDEN_SECTIONS={["Status And Server\1BananaCat Status UI"]=true,["Status And Server\1FROST BLADE Status UI"]=true}
+local pages,pageByName,byKey,options={},{},{},{}
+local features={}
+local function dummySection()
+    local section={}
+    local function makeHandle()
+        local h={}
+        function h.SetValue() end
+        h.SetStage=h.SetValue
+        function h.SetText() end
+        function h.GetValue() return nil end
+        function h.GetText() return "" end
+        function h.SetSubValue() end
+        function h.GetNewList() end
+        function h.SetList() end
+        return h
+    end
+    for _,name in ipairs({"CreateButton","CreateToggle","CreateDropdown","CreateSlider","CreateBox","CreateBind","CreateLabel"}) do
+        section[name]=function(_,_,_) return makeHandle() end
+    end
+    return section
+end
+local function keyFor(p,s,k,n) return p.."\1"..s.."\1"..k.."\1"..n end
+local function addFeature(page,sect,kind,name)
+    if HIDDEN_PAGES[page] or HIDDEN_SECTIONS[page.."\1"..sect] then return {Hidden=true} end
+    if not pageByName[page] then
+        local p={Name=page,Entries={},Tab=nil}
+        pages[#pages+1]=p;pageByName[page]=p
+    end
+    -- O catalogo antigo usa Label, enquanto o backend usa CreateLabel/textlabel.
+    -- Normalize para que ambos apontem ao MESMO controle.
+    local canonicalKind=kind:lower()=="label" and "textlabel" or kind:lower()
+    local f={Page_Name=page,Section_Name=sect,Type=canonicalKind,Title=name,Config={},Value=nil,Callback=nil,Rendered=nil,Connected=false}
+    features[#features+1]=f
+    table.insert(pageByName[page].Entries,f)
+    local k=keyFor(page,sect,f.Type,name)
+    if not byKey[k] then byKey[k]={} end
+    table.insert(byKey[k],f)
+    return f
+end
+for _,e in ipairs(entries) do if not HIDDEN_PAGES[e[1]] and not HIDDEN_SECTIONS[e[1].."\1"..e[2]] then addFeature(e[1],e[2],e[3],e[4]) end end
+local languagePage={Name="Languages",Entries={},Tab=nil}
+table.insert(pages,math.min(2,#pages+1),languagePage)
+pageByName.Languages=languagePage
+local chosen=nil
+local connected=0
+local function updateInfo()
+    info.Text=tostring(#features).." "..W("count").." • "..tostring(connected).." "..W("ready").." • "..tostring(#features-connected).." "..W("pending")
+end
+local function invoke(f,value,extra,callbackArgs,userInitiated)
+    if not f.Connected then
+        f.LastError="Controle não conectado ao código original"
+        notify("⚠ "..W("loading")..translated(f.Title))
+        return false
+    end
+    if type(f.Callback)~="function" then
+        f.LastError="Função do botão não fornecida pelo código original"
+        notify("⚠ Função indisponível: "..translated(f.Title))
+        return false
+    end
+    local previous=f.Value
+    f.Value=value
+    if f.Rendered then pcall(f.Rendered,value) end
+    local opt=options[f.Title];if opt and opt.Feature==f then opt.value=value end
+    if userInitiated then PreferenceRecord(f,value) end
+    task.spawn(function()
+        local ok,err
+        if callbackArgs then
+            ok,err=pcall(f.Callback,callbackArgs[1],callbackArgs[2])
+        else
+            ok,err=pcall(f.Callback,value,extra)
+        end
+        if not ok then
+            f.LastError=tostring(err)
+            f.Value=previous
+            if userInitiated then
+                if previous==nil then
+                    PreferenceState.Controls[PreferenceKey(f)]=nil
+                    PreferenceSave()
+                else
+                    PreferenceRecord(f,previous)
+                end
+            end
+            if f.Rendered then pcall(f.Rendered,previous) end
+            warn("[FROST BLADE] "..f.Title..": "..tostring(err))
+            notify(W("failure")..translated(f.Title).." (veja Output/F9)")
+        else f.LastError=nil end
+    end)
+    return true
+end
+local function listChoices(f)
+    local src=f.Config.List or f.Config.Values or {}
+    if type(src)=="function" then local ok,v=pcall(src);src=ok and v or {} end
+    local out={}
+    if type(src)=="table" then
+        for k,v in pairs(src) do
+            local label,value
+            if type(k)=="number" then
+                if type(v)=="table" then
+                    label=tostring(v.Title or v.Name or v.KeyName or v.Value or k)
+                    value=v.Value or v.KeyName or v.Name or v.Title or v
+                else label=tostring(v);value=v end
+            else
+                label=tostring(k)
+                value=k
+            end
+            out[#out+1]={Label=label,Value=value,Source=v}
+        end
+    end
+    table.sort(out,function(a,b)return a.Label:lower()<b.Label:lower() end)
+    return out
+end
+local function newRow(height)
+    local item=create("Frame",{BackgroundColor3=C.panel,BorderSizePixel=0,Size=UDim2.new(1,-5,0,height),ClipsDescendants=true},scroller)
+    round(item,8);return item
+end
+local function drawFeature(f)
+    local kind=f.Type
+    if kind=="textlabel" then
+        local row=newRow(34)
+        local label=txt(row,translated(f.Title),11,C.muted);label.Size=UDim2.new(1,-18,1,0);label.Position=UDim2.fromOffset(9,0)
+        f.Rendered=function(v) label.Text=translated(v or f.Title) end
+        f.Rendered(f.Value)
+        return
+    end
+    local h=(kind=="dropdown" or kind=="slider" or kind=="box") and 76 or 48
+    local row=newRow(h)
+    local usable=f.Connected and type(f.Callback)=="function"
+    local name=txt(row,translated(f.Title),12,usable and C.text or C.muted,true);name.Position=UDim2.fromOffset(10,4)
+    name.Size=UDim2.new(1,(kind=="toggle" or kind=="button") and -105 or -22,0,(kind=="toggle" or kind=="button") and 36 or 28)
+    if not usable then name.Text="⚠ "..name.Text end
+    if kind=="button" then
+        local run=button(row,W("use"));run.Size=UDim2.fromOffset(71,28);run.Position=UDim2.new(1,-83,.5,-14)
+        run.MouseButton1Click:Connect(function()invoke(f,nil,nil,nil,true)end)
+        f.Rendered=function() end
+    elseif kind=="toggle" then
+        local toggle=button(row,"OFF");toggle.Size=UDim2.fromOffset(70,28);toggle.Position=UDim2.new(1,-82,.5,-14)
+        f.Rendered=function(v)
+            toggle.Text=v==true and W("on") or W("off")
+            toggle.BackgroundColor3=v==true and C.ice or C.low
+            toggle.TextColor3=v==true and C.bg or C.text
+        end
+        toggle.MouseButton1Click:Connect(function()invoke(f,f.Value~=true,nil,nil,true)end)
+        f.Rendered(f.Value)
+    elseif kind=="slider" then
+        local lower=tonumber(f.Config.Min) or 0;local upper=tonumber(f.Config.Max) or 100
+        if upper<lower then upper=lower end
+        local input=create("TextBox",{Text="",TextColor3=C.text,BackgroundColor3=C.tile,BorderSizePixel=0,ClearTextOnFocus=false,TextSize=12,Font=Enum.Font.GothamBold,Size=UDim2.fromOffset(60,23),Position=UDim2.new(1,-71,0,7)},row);round(input,5)
+        local track=create("Frame",{Active=true,BackgroundColor3=C.low,BorderSizePixel=0,Position=UDim2.fromOffset(12,53),Size=UDim2.new(1,-24,0,7)},row);round(track,5)
+        local fillBar=create("Frame",{BackgroundColor3=C.ice,BorderSizePixel=0,Size=UDim2.fromScale(0,1)},track);round(fillBar,5)
+        f.Rendered=function(value)
+            local n=math.clamp(tonumber(value) or lower,lower,upper)
+            fillBar.Size=UDim2.fromScale(upper>lower and (n-lower)/(upper-lower) or 0,1)
+            if not input:IsFocused() then input.Text=tostring(math.floor(n*100+.5)/100) end
+        end
+        local function valueAt(x)
+            local fraction=math.clamp((x-track.AbsolutePosition.X)/math.max(1,track.AbsoluteSize.X),0,1)
+            local n=lower+(upper-lower)*fraction
+            if not f.Config.Precise then n=math.floor(n+.5) end
+            invoke(f,n,nil,nil,true)
+        end
+        track.InputBegan:Connect(function(inp)if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then valueAt(inp.Position.X) end end)
+        input.FocusLost:Connect(function()invoke(f,math.clamp(tonumber(input.Text) or lower,lower,upper),nil,nil,true)end)
+        f.Rendered(f.Value or f.Config.Default or lower)
+    elseif kind=="box" then
+        local input=create("TextBox",{Text=tostring(f.Value or ""),PlaceholderText=W("select"),PlaceholderColor3=C.muted,TextColor3=C.text,BackgroundColor3=C.tile,BorderSizePixel=0,TextSize=12,Font=Enum.Font.Gotham,ClearTextOnFocus=false,Position=UDim2.fromOffset(10,35),Size=UDim2.new(1,-20,0,29)},row);round(input,5)
+        input.FocusLost:Connect(function()invoke(f,input.Text,nil,nil,true)end)
+        f.Rendered=function(v) if not input:IsFocused() then input.Text=tostring(v or "") end end
+    elseif kind=="dropdown" then
+        local select=button(row,W("select").." ▾");select.Position=UDim2.fromOffset(10,35);select.Size=UDim2.new(1,-20,0,30)
+        f.Rendered=function(v)
+            if type(v)=="table" then
+                local selected={}
+                if f.Config.Priority then
+                    for _,name in ipairs(v) do selected[#selected+1]=translated(name) end
+                elseif f.Config.Slider then
+                    select.Text="Ajustar tempos das habilidades ▾"
+                    return
+                else
+                    for k,val in pairs(v) do if val==true then selected[#selected+1]=translated(k) end end
+                    table.sort(selected)
+                end
+                select.Text=#selected==0 and (W("select").." ▾") or (table.concat(selected,", ").." ▾")
+            else select.Text=(v and translated(v) or W("select")).." ▾" end
+        end
+        local function closeOptions()
+            row:SetAttribute("Expanded",false)
+            local existing=row:FindFirstChild("FrostOptionsList")
+            if existing then existing:Destroy() end
+            row.Size=UDim2.new(1,-5,0,76)
+        end
+        select.MouseButton1Click:Connect(function()
+            if row:GetAttribute("Expanded") then closeOptions();return end
+            local choices=listChoices(f)
+            if #choices==0 then notify(W("chooseOptions"));return end
+            local optionHeight=f.Config.Slider and 48 or 33
+            local listHeight=math.min(280, #choices*optionHeight+7)
+            row:SetAttribute("Expanded",true)
+            row.Size=UDim2.new(1,-5,0,76+listHeight)
+            local optionsScroll=create("ScrollingFrame",{
+                Name="FrostOptionsList",Position=UDim2.fromOffset(10,76),
+                Size=UDim2.new(1,-20,0,listHeight),
+                BackgroundColor3=C.tile,BorderSizePixel=0,ScrollBarThickness=4,
+                ScrollBarImageColor3=C.ice,CanvasSize=UDim2.new(),
+                AutomaticCanvasSize=Enum.AutomaticSize.Y,
+            },row)
+            round(optionsScroll,7)
+            create("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder},optionsScroll)
+            create("UIPadding",{PaddingTop=UDim.new(0,2),PaddingBottom=UDim.new(0,5),PaddingLeft=UDim.new(0,2),PaddingRight=UDim.new(0,7)},optionsScroll)
+            for i,choice in ipairs(choices) do
+                local value=choice.Value
+                local option=button(optionsScroll,translated(choice.Label))
+                option.LayoutOrder=i
+                option.Name="FrostOption"
+                option.Size=UDim2.new(1,-8,0,f.Config.Slider and 44 or 29)
+                option.TextSize=11
+                option.TextWrapped=true
+                if f.Config.Slider then
+                    -- O menu original recebe um registro {KeyName, Default, Min, Max}.
+                    -- Antes recebia apenas "Z", "X", "C" etc., e nunca salvava o atraso.
+                    local descriptor=type(choice.Source)=="table" and choice.Source or {KeyName=tostring(value),Title=choice.Label,Min=0,Max=5,Default=0.5}
+                    option.Text=""
+                    local l=txt(option,translated(choice.Label),12,C.text,true)
+                    l.Position=UDim2.fromOffset(8,2);l.Size=UDim2.new(1,-110,1,-4)
+                    local editor=create("TextBox",{Text=tostring(descriptor.Default or 0.5),TextColor3=C.text,BackgroundColor3=C.panel,BorderSizePixel=0,ClearTextOnFocus=false,TextSize=12,Font=Enum.Font.GothamBold,Size=UDim2.fromOffset(52,29),Position=UDim2.new(1,-102,0,7)},option)
+                    round(editor,5)
+                    local apply=button(option,"OK")
+                    apply.Size=UDim2.fromOffset(35,29);apply.Position=UDim2.new(1,-45,0,7)
+                    local function commit()
+                        local num=tonumber(editor.Text)
+                        if not num then notify("⚠ Insira um número válido");return end
+                        local min=tonumber(descriptor.Min) or 0
+                        local max=tonumber(descriptor.Max) or 5
+                        num=math.clamp(num,min,max)
+                        if not descriptor.Precise then num=math.floor(num+0.5) end
+                        local updated={}
+                        for k,v in pairs(descriptor) do updated[k]=v end
+                        updated.Default=num
+                        -- O backend antigo espera o registro no SEGUNDO argumento.
+                        invoke(f,updated,updated,{updated,updated},true)
+                        descriptor.Default=num
+                        editor.Text=tostring(num)
+                    end
+                    apply.MouseButton1Click:Connect(commit)
+                    editor.FocusLost:Connect(commit)
+                else
+                    option.MouseButton1Click:Connect(function()
+                        if f.Config.Priority then
+                            -- A prioridade e uma LISTA ordenada, nao uma string.
+                            local nextValue={}
+                            if type(f.Value)=="table" then
+                                for _,v in ipairs(f.Value) do nextValue[#nextValue+1]=v end
+                            end
+                            local at=table.find(nextValue,value)
+                            if at then table.remove(nextValue,at) else nextValue[#nextValue+1]=value end
+                            invoke(f,nextValue,nil,nil,true)
+                        elseif f.Config.Selected then
+                            -- No backend, multisselecao chama callback(nome, ligado).
+                            local map={}
+                            if type(f.Value)=="table" then
+                                for k,v in pairs(f.Value) do map[k]=v end
+                            end
+                            map[value]=not map[value]
+                            invoke(f,map,value,{value,map[value]},true)
+                        else
+                            invoke(f,value,nil,nil,true)
+                        end
+                        closeOptions()
+                    end)
+                end
+            end
+        end)
+        f.Rendered(f.Value)
+    else
+        local b=button(row,W("select"));b.Size=UDim2.fromOffset(85,28);b.Position=UDim2.new(1,-95,0,9)
+        b.MouseButton1Click:Connect(function()notify("Atalho de teclado: CTRL esquerdo")end)
+        f.Rendered=function() end
+    end
+end
+local function clearRows()
+    for _,child in ipairs(scroller:GetChildren()) do if child:IsA("GuiObject") then child:Destroy() end end
+    for _,f in ipairs(features) do f.Rendered=nil end
+end
+local render
+local function drawLanguages()
+    local headline=txt(scroller,"🌐 "..W("choose"),18,C.ice,true)
+    headline.Size=UDim2.new(1,-10,0,40)
+    local details=txt(scroller,W("help"),12,C.muted)
+    details.Size=UDim2.new(1,-10,0,66)
+    for i,choice in ipairs(LANGUAGE_CHOICES) do
+        local cell=newRow(49)
+        local name=txt(cell,choice.flag.."  "..choice.name,13,C.text,true)
+        name.Size=UDim2.new(1,-112,1,0)
+        name.Position=UDim2.fromOffset(14,0)
+        local active=choice.code==CURRENT_LANG
+        local activate=button(cell,active and "✓" or ">")
+        activate.Size=UDim2.fromOffset(73,30)
+        activate.Position=UDim2.new(1,-88,.5,-15)
+        activate.BackgroundColor3=active and C.ice or C.low
+        activate.TextColor3=active and C.bg or C.text
+        activate.MouseButton1Click:Connect(function()
+            CURRENT_LANG=choice.code
+            _G.FrostBladeLanguage=CURRENT_LANG
+            PreferenceState.Language=CURRENT_LANG
+            PreferenceSave()
+            notify(W("languageSet")..choice.name)
+            -- Re-render from stable feature identifiers; callbacks still receive original values.
+            for _,p in ipairs(pages) do if p.Tab then p.Tab.Text=translatedPage(p.Name) end end
+            navCaption.Text="  ❄ "..W("nav")
+            search.PlaceholderText=W("search")
+            introTag.Text="❄ "..W("intro").." ❄"
+            introMini.Text=W("introHelp")
+            updateInfo()
+            sectionTitle.Text=translatedPage("Languages")
+            render()
+        end)
+    end
+    local saveRow=newRow(89)
+    local saveStatus=txt(saveRow,PreferenceStatus(),11,C.muted)
+    saveStatus.Size=UDim2.new(1,-18,0,44)
+    saveStatus.Position=UDim2.fromOffset(9,3)
+    local saveNow=button(saveRow,"💾 SALVAR CONFIGURAÇÕES AGORA")
+    saveNow.Size=UDim2.new(1,-20,0,31)
+    saveNow.Position=UDim2.fromOffset(10,51)
+    saveNow.MouseButton1Click:Connect(function()
+        PreferenceState.Language=CURRENT_LANG
+        if PreferenceSave() then
+            notify("💾 Preferencias salvas neste dispositivo")
+        else
+            notify("⚠ Salvamento nao disponivel aqui (Output/F9)")
+        end
+        saveStatus.Text=PreferenceStatus()
+    end)
+    local checkRow=newRow(56)
+    local check=button(checkRow,"🔍 DIAGNOSTICAR FUNÇÕES")
+    check.Size=UDim2.new(1,-24,0,36)
+    check.Position=UDim2.fromOffset(12,10)
+    check.TextSize=12
+    check.MouseButton1Click:Connect(function()
+        local hub=_G.FrostBladeHub
+        if not hub or not hub.PrintReport then notify("Sistema de diagnóstico ainda não pronto") return end
+        local result=hub.PrintReport()
+        notify(string.format("Prontas: %d/%d • Não conectadas: %d • Erros: %d (Output/F9)",result.ready,result.total,#result.unconnected,#result.failed))
+    end)
+end
+render=function()
+    if not chosen then return end
+    clearRows()
+    if chosen.Name=="Languages" then drawLanguages();return end
+    local query=search.Text:lower()
+    local group=nil
+    local count=0
+    for _,f in ipairs(chosen.Entries) do
+        local matches=query=="" or f.Title:lower():find(query,1,true) or f.Section_Name:lower():find(query,1,true) or translated(f.Title):lower():find(query,1,true) or translated(f.Section_Name):lower():find(query,1,true)
+        if matches then
+            if f.Section_Name~=group then
+                group=f.Section_Name
+                local sect=txt(scroller,(group=="☢️ RISCO" and "  " or "  ❄ ")..translated(group),13,C.ice,true);sect.Name="FrostSection";sect.Size=UDim2.new(1,-5,0,32)
+            end
+            drawFeature(f);count+=1
+        end
+    end
+    if count==0 then
+        local notFound=txt(scroller,W("missing"),12,C.muted)
+        notFound.Name="FrostSection";notFound.Size=UDim2.new(1,-10,0,48)
+    end
+end
+local function selectPage(p)
+    chosen=p
+    PreferenceState.LastPage=p.Name
+    PreferenceSave()
+    sectionTitle.Text=translatedPage(p.Name)
+    for _,each in ipairs(pages) do
+        if each.Tab then each.Tab.BackgroundColor3=each==p and C.ice or C.panel;each.Tab.TextColor3=each==p and C.bg or C.muted end
+    end
+    render()
+end
+for i,p in ipairs(pages) do
+    local tab=button(nav,translatedPage(p.Name));tab.LayoutOrder=i;tab.Size=UDim2.new(1,-6,0,39);tab.TextSize=11;tab.TextWrapped=true;tab.TextXAlignment=Enum.TextXAlignment.Left
+    create("UIPadding",{PaddingLeft=UDim.new(0,9)},tab);p.Tab=tab
+    tab.MouseButton1Click:Connect(function()selectPage(p)end)
+end
+search:GetPropertyChangedSignal("Text"):Connect(render)
+navCaption.Text="  ❄ "..W("nav")
+search.PlaceholderText=W("search")
+introTag.Text="❄ "..W("intro").." ❄"
+introMini.Text=W("introHelp")
+updateInfo()
+if pages[1] then
+    selectPage(pageByName[PreferenceState.LastPage] or pages[1])
+end
+
+-- API de compatibilidade do menu antigo: cada callback se conecta a um controle ja existente.
+local claimed={}
+local MainUI={Options=options}
+function MainUI.CreateMain(_)
+    local m={}
+    function m.CreatePage(infoPage)
+        local pageName=tostring(infoPage and (infoPage.Page_Name or infoPage.Page_Title) or "Geral")
+        if HIDDEN_PAGES[pageName] then
+            local hiddenPage={}
+            function hiddenPage.CreateSection(_) return dummySection() end
+            return hiddenPage
+        end
+        if not pageByName[pageName] then
+            pageByName[pageName]={Name=pageName,Entries={}}
+        end
+        local page={}
+        function page.CreateSection(sectionName)
+            local s=tostring(sectionName or "Geral")
+            if HIDDEN_SECTIONS[pageName.."\1"..s] then return dummySection() end
+            local section={}
+            local kinds={CreateButton="button",CreateToggle="toggle",CreateDropdown="dropdown",CreateSlider="slider",CreateBox="box",CreateBind="bind",CreateLabel="textlabel"}
+            for method,kind in pairs(kinds) do
+                section[method]=function(cfg,callback)
+                    cfg=type(cfg)=="table" and cfg or {Title=tostring(cfg or kind)}
+                    local name=tostring(cfg.Title or kind)
+                    local id=keyFor(pageName,s,kind,name)
+                    claimed[id]=(claimed[id] or 0)+1
+                    local pos=claimed[id]
+                    local f=byKey[id] and byKey[id][pos]
+                    if not f then f=addFeature(pageName,s,kind,name) end
+                    if not f.Connected then connected+=1 end
+                    f.Connected=true;f.Config=cfg;f.DefaultBeforeRestore=cfg.Default;f.Callback=callback
+                    local oldValue=PreferenceState.Controls[PreferenceKey(f)]
+                    if oldValue~=nil and (kind=="toggle" or kind=="slider" or kind=="dropdown" or kind=="box") then
+                        f.Value=PreferenceCopy(oldValue)
+                        f.NeedsPreferenceRestore=true
+                    else
+                        f.Value=cfg.Default
+                        f.NeedsPreferenceRestore=false
+                    end
+                    f.LastError=nil
+                    local handle={}
+                    function handle.SetValue(first,second,...)
+                        local value=first==handle and second or first
+                        if kind=="textlabel" then
+                            f.Value=value
+                            if f.Rendered then pcall(f.Rendered,value) end
+                            return true
+                        end
+                        return invoke(f,value,...)
+                    end
+                    handle.SetStage=handle.SetValue
+                    -- O backend chama GetNewList quando o jogador aperta Atualizar Player/Boss.
+                    -- Sem este metodo os botoes de atualizacao sempre falhavam.
+                    function handle.GetNewList(first,second)
+                        local list=first==handle and second or first
+                        if type(list)~="table" then return false end
+                        f.Config.List=list
+                        -- Ao abrir a lista novamente, as opcoes ja sao geradas com o novo conteudo.
+                        if chosen and chosen.Name==f.Page_Name then task.defer(updateInfo) end
+                        return true
+                    end
+                    handle.SetList=handle.GetNewList
+                    function handle.SetText(first,second)
+                        local value=first==handle and second or first
+                        f.Value=tostring(value)
+                        if f.Rendered then pcall(f.Rendered,f.Value) end
+                    end
+                    function handle.GetValue() return f.Value end
+                    function handle.GetText() return tostring(f.Value or f.Title) end
+                    function handle.SetSubValue(first,second,third)
+                        local k,v=first==handle and second or first,first==handle and third or second
+                        local map=type(f.Value)=="table" and f.Value or {}
+                        map[k]=v
+                        return invoke(f,map,k)
+                    end
+                    f.FunctionCreate=handle
+                    options[name]={Feature=f,FunctionCreate=handle,name=name,type=(kind=="dropdown" and cfg.Slider and "slider_dropdown" or kind=="dropdown" and cfg.Priority and "priority_dropdown" or kind),value=f.Value,text=name}
+                    if connected%7==0 then task.defer(updateInfo) end
+                    return handle
+                end
+            end
+            return section
+        end
+        return page
+    end
+    return m
+end
+function MainUI.CreateNoti(cfg)
+    if type(cfg)=="table" then notify(cfg.Desc or cfg.Title or "Notificação") end
+end
+local FrostBlade={GUI=gui,Features=features,Pages=pages,Options=options,Backend=MainUI}
+function FrostBlade.CurrentLanguage() return CURRENT_LANG end
+function FrostBlade.SavePreferences() return PreferenceSave() end
+function FrostBlade.PreferencesStatus() return PreferenceStatus() end
+local function PreferenceRestoreCallbacks()
+    -- Restaura primeiro seletores/sliders; depois toggles (dependencias ja selecionadas).
+    -- Nao repete funcoes quando o backend ja iniciou com o mesmo Default salvo.
+    local changes=0
+    for _,kind in ipairs({"dropdown","slider","box","toggle"}) do
+        for _,f in ipairs(features) do
+            if f.Type==kind and f.Connected and f.NeedsPreferenceRestore and type(f.Callback)=="function" then
+                f.NeedsPreferenceRestore=false
+                local preference=PreferenceState.Controls[PreferenceKey(f)]
+                if preference~=nil then
+                    local currentDefault=f.DefaultBeforeRestore
+                    -- O backend costuma buscar Settings[] do mesmo arquivo e executar
+                    -- alguns farms automaticamente; evitar inicializar duas vezes.
+                    local sameDefault=false
+                    local ok,left,right=pcall(function()
+                        return PreferenceHTTP:JSONEncode(preference),PreferenceHTTP:JSONEncode(currentDefault)
+                    end)
+                    if ok then sameDefault=(left==right) end
+                    f.Value=PreferenceCopy(preference)
+                    if f.Rendered then pcall(f.Rendered,f.Value) end
+                    if not sameDefault then
+                        if kind=="dropdown" and f.Config.Selected and type(preference)=="table" then
+                            -- MultiSelect original: callback(nome, ativo), uma opcao por vez.
+                            for k,v in pairs(preference) do
+                                if type(k)=="string" and type(v)=="boolean" then
+                                    task.spawn(function()
+                                        local fine,err=pcall(f.Callback,k,v)
+                                        if not fine then warn("[FROST BLADE / SALVAR] "..f.Title..": "..tostring(err)) end
+                                    end)
+                                end
+                            end
+                        elseif kind=="dropdown" and f.Config.Slider then
+                            -- Cada campo de atraso foi armazenado na estrutura JSON;
+                            -- outros dados de objetos nao sao seguros para serializar.
+                            if type(preference)=="table" and preference.KeyName then
+                                task.spawn(function() pcall(f.Callback,preference,preference) end)
+                            end
+                        else
+                            task.spawn(function()
+                                local fine,err=pcall(f.Callback,PreferenceCopy(preference))
+                                if not fine then warn("[FROST BLADE / SALVAR] "..f.Title..": "..tostring(err)) end
+                            end)
+                        end
+                        changes+=1
+                    end
+                end
+            end
+        end
+    end
+    return changes
+end
+function FrostBlade.Complete(message)
+    local restored=PreferenceRestoreCallbacks()
+    updateInfo()
+    render()
+    notify((message or (tostring(connected).." "..W("ready")))..(PreferenceLoaded and (" • 💾 "..tostring(restored).." ajustes solicitados") or ""))
+end
+function FrostBlade.Report()
+    local report={total=#features,connected=0,ready=0,unconnected={},noCallback={},failed={}}
+    for _,f in ipairs(features) do
+        if f.Connected then
+            report.connected+=1
+            if f.Type=="textlabel" or type(f.Callback)=="function" then
+                report.ready+=1
+            else
+                report.noCallback[#report.noCallback+1]=f.Page_Name.." / "..f.Title
+            end
+        else
+            report.unconnected[#report.unconnected+1]=f.Page_Name.." / "..f.Title
+        end
+        if f.LastError then report.failed[#report.failed+1]=f.Page_Name.." / "..f.Title..": "..tostring(f.LastError) end
+    end
+    return report
+end
+function FrostBlade.PrintReport()
+    local r=FrostBlade.Report()
+    print(("[FROST BLADE / DIAGNOSTICO] %d/%d conectados; %d com callback ou label; %d sem callback; %d falhas"):format(r.connected,r.total,r.ready,#r.noCallback,#r.failed))
+    for _,item in ipairs(r.unconnected) do warn("[SEM CONEXAO] "..item) end
+    for _,item in ipairs(r.noCallback) do warn("[SEM CALLBACK] "..item) end
+    for _,item in ipairs(r.failed) do warn("[ERRO] "..item) end
+    return r
+end
+function FrostBlade.Find(title)
+    for _,f in ipairs(features) do if f.Title==title then return f end end
+end
+function FrostBlade.Set(title,value)
+    local f=FrostBlade.Find(title);if not f then return false end
+    return invoke(f,value)==true
+end
+function FrostBlade.Toggle() if (not intro or not intro.Parent) then show(not window.Visible) end end
+_G.FrostBladeHub=FrostBlade
+local env=type(getgenv)=="function" and getgenv() or _G
+env.FrostBlade=FrostBlade
+-- A referencia 'A' e usada pelo backend original sem biblioteca antiga.
+local A=MainUI
+task.spawn(function()
+    -- Backend executado separadamente: travamentos/erros do jogo nao bloqueiam a interface.
+    info.Text="❄ "..W("pending").."..."
+    local ok,reason=xpcall(function()
+        if type(getgenv)~="function" then getgenv=function() return _G end end
+        if type(isfolder)~="function" then isfolder=function() return true end end
+        if type(makefolder)~="function" then makefolder=function() end end
+        if type(writefile)~="function" then writefile=function() end end
+        if type(readfile)~="function" then readfile=function() return "{}" end end
+        local rs=game:GetService("ReplicatedStorage")
+        local remotes=rs:WaitForChild("Remotes",10)
+        if not remotes or not remotes:WaitForChild("CommF_",10) then
+            task.defer(function() FrostBlade.Complete("Menu aberto! Funções precisam dos sistemas do Blox Fruits.") end)
+            return
+        end
+        -- INICIO: CODIGO ORIGINAL DO USUARIO (funcoes)
+-- Novo menu: sem bloqueio de segunda execucao.
 
 repeat
 	wait()
@@ -58,7 +1332,7 @@ task.spawn(function()
 	local ok, name = pcall(function()
 		return identifyexecutor and identifyexecutor() or "unknown"
 	end)
-	print("[BananaFix] executor:", ok and name or "unknown", "| thieu ham:", #miss > 0 and table.concat(miss, ", ") or "khong")
+	print("[FrostBlade] executor:", ok and name or "unknown", "| thieu ham:", #miss > 0 and table.concat(miss, ", ") or "khong")
 end)
 local function uiStub()
 	return setmetatable({}, {
@@ -85,7 +1359,7 @@ local function guardUI(obj, label)
 					res = table.pack(pcall(v, ...))
 				end
 				if not res[1] then
-					warn(("[BananaFix] %s.%s failed: %s"):format(label, tostring(k), tostring(res[2])))
+					warn(("[FrostBlade] %s.%s failed: %s"):format(label, tostring(k), tostring(res[2])))
 					return uiStub()
 				end
 				return guardUI(res[2], label .. "." .. tostring(k)), unpack(res, 3, res.n)
@@ -237,7 +1511,7 @@ end
 
 Settings = {}
 HttpService = game:GetService("HttpService")
-FolderName = "Banana Cat Hub"
+FolderName = "FROST BLADE HUB"
 SaveFileNameGame = "-BloxFruitBNNC.json"
 SaveFileName = game.Players.LocalPlayer.Name .. SaveFileNameGame
 function SaveSettings(b, t, A)
@@ -305,15 +1579,20 @@ function EnsureAllTrueDefaults(b, t)
 		end
 	end
 end
-repeat
-	wait()
-until game:FindFirstChild("CoreGui")
-repeat
-	wait()
-until not game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("LoadingScreen")
-repeat
-	wait()
-until game:IsLoaded() and (game.Players.LocalPlayer:FindFirstChild("DataLoaded"))
+-- V5: nenhuma tela opcional pode prender o carregamento do hub para sempre.
+local function FrostWaitFor(predicate,timeout,label)
+    local limit=os.clock()+(timeout or 15)
+    repeat
+        local ok,res=pcall(predicate)
+        if ok and res then return true end
+        task.wait(.2)
+    until os.clock()>limit
+    warn("[FROST BLADE] Tempo esgotado aguardando "..tostring(label or "recurso"))
+    return false
+end
+FrostWaitFor(function() return game:IsLoaded() end,20,"jogo carregado")
+FrostWaitFor(function() return not game.Players.LocalPlayer.PlayerGui:FindFirstChild("LoadingScreen") end,12,"tela inicial")
+FrostWaitFor(function() return game.Players.LocalPlayer:FindFirstChild("DataLoaded")~=nil end,20,"DataLoaded")
 function FireButton(b)
 	b.Selectable = true
 	game:GetService("GuiService").SelectedObject = b
@@ -323,27 +1602,27 @@ function FireButton(b)
 		game:GetService("GuiService").SelectedObject = nil
 	end)
 end
-repeat
-	wait()
-until game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Main (minimal)")
-	or (game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Main"))
-local b = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Main (minimal)")
-	or (game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Main"))
-repeat
-	wait()
-until b:FindFirstChild("ChooseTeam")
-repeat
-	task.wait()
-	pcall(function()
-		local choose = b:FindFirstChild("ChooseTeam")
-		if choose then
-			local isPirate = Settings["Select Team"] == "Pirate"
-			FireButton(choose.Container[isPirate and "Pirates" or "Marines"].Frame.TextButton)
-			wait(1)
-		end
-	end)
-until not b.Parent or not b:FindFirstChild("ChooseTeam") or not b.ChooseTeam.Visible
-game:GetService("GuiService").SelectedObject = nil
+-- Antes esperava ChooseTeam mesmo quando o jogador JA tinha escolhido uma equipe.
+-- Essa espera infinita deixava centenas de controles visiveis mas sem callback.
+FrostWaitFor(function()
+    local pg=game.Players.LocalPlayer.PlayerGui
+    return pg:FindFirstChild("Main (minimal)") or pg:FindFirstChild("Main")
+end,15,"interface principal")
+local b=game.Players.LocalPlayer.PlayerGui:FindFirstChild("Main (minimal)")
+    or game.Players.LocalPlayer.PlayerGui:FindFirstChild("Main")
+if b then
+    local choose=b:FindFirstChild("ChooseTeam")
+    if choose and choose.Visible then
+        local teamName=Settings["Select Team"] == "Pirate" and "Pirates" or "Marines"
+        local option=choose:FindFirstChild("Container")
+        option=option and option:FindFirstChild(teamName)
+        option=option and option:FindFirstChild("Frame")
+        option=option and option:FindFirstChild("TextButton")
+        if option then pcall(FireButton,option) end
+        FrostWaitFor(function() return not choose.Parent or not choose.Visible end,12,"selecao de equipe")
+    end
+end
+pcall(function() game:GetService("GuiService").SelectedObject=nil end)
 repeat
 	wait()
 until game:IsLoaded() and game.Players.LocalPlayer
@@ -357,9 +1636,8 @@ getgenv().ExploitReq = (syn and syn.request)
 	or request
 	or requests
 getgenv().request = getgenv().request or getgenv().ExploitReq
-if getgenv().LoadScript then
-	return print("Double UI")
-end
+-- Controle da instancia do menu agora e feito pelo ScreenGui.
+
 getgenv().CheckPlaceId = game.PlaceId == 100117331123089 and 100117331123089 or 7449423635
 getgenv().CheckPlaceId2 = game.PlaceId == 4442272183 and 4442272183 or 79091703265657
 getgenv().CheckPlaceId3 = game.PlaceId == 2753915549 and 2753915549 or 85211729168715
@@ -367,7 +1645,8 @@ getgenv().LoadScript = true
 local t = game.Players.LocalPlayer
 getgenv().getupvalue = debug.getupvalue
 getgenv().getupvalues = debug.getupvalues
-wOrigin = game:GetService("Workspace"):WaitForChild("_WorldOrigin")
+wOrigin = game:GetService("Workspace"):FindFirstChild("_WorldOrigin") or game:GetService("Workspace"):WaitForChild("_WorldOrigin",8)
+if not wOrigin then warn("[FROST BLADE] _WorldOrigin ausente: funcoes dependentes do mapa podem ficar indisponiveis") end
 CommF = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_")
 vu = game:GetService("VirtualUser")
 game:GetService("Players").LocalPlayer.Idled:connect(function()
@@ -375,9 +1654,7 @@ game:GetService("Players").LocalPlayer.Idled:connect(function()
 	wait(1)
 	vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
 end)
-local A =
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/obiiyeuem/vthangsitink/refs/heads/main/zzzz.lua"))()
-Main = guardUI(A.CreateMain({ Title = "Blox Fruit", Desc = " - Blox Fruit" }), "Main")
+Main = guardUI(A.CreateMain({ Title = "🥶 FROST BLADE HUB", Desc = " - ICE EDITION" }), "Main")
 PageShop = Main.CreatePage({ Page_Name = "Shop", Page_Title = "Shop" })
 getgenv().Options = A.Options
 SectionShopMisc = PageShop.CreateSection("Misc Shop")
@@ -391,7 +1668,15 @@ end
 getgenv().tablefruitausea3 = {}
 whitelistedfruit = {}
 TableDevilFruit = {}
-local a, s, X = next, game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("GetFruits", false)
+local function FrostGetFruitsSafe()
+    local ok,result=pcall(function()
+        return game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("GetFruits",false)
+    end)
+    if ok and type(result)=="table" then return result end
+    warn("[FROST BLADE] GetFruits indisponivel ou retornou tipo inesperado")
+    return {}
+end
+local a, s, X = next, FrostGetFruitsSafe()
 for g, g in a, s, X do
 	if g.Price >= 1000000 then
 		table.insert(whitelistedfruit, string.split(g.Name, "-")[1] .. " Fruit")
@@ -401,9 +1686,13 @@ for g, g in a, s, X do
 end
 getgenv().tablefruitausea3["Dragon (East)-Dragon (East)"] = 15000000
 getgenv().tablefruitausea3["Dragon (West)-Dragon (West)"] = 15000000
-ItemId = require(game.ReplicatedStorage.Economy.ItemId)
+local _itemIdOk,_itemIdResult=pcall(function()
+    return require(game.ReplicatedStorage.Economy.ItemId)
+end)
+ItemId=_itemIdOk and _itemIdResult or {}
+if not _itemIdOk then warn("[FROST BLADE] Economy.ItemId indisponivel: "..tostring(_itemIdResult)) end
 function CheckFruitReal(g)
-	local G, f, K = next, game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("GetFruits", false)
+	local G, f, K = next, FrostGetFruitsSafe()
 	for R, R in G, f, K do
 		if R.Name == g then
 			return R
@@ -787,438 +2076,7 @@ SectionShopAbilities.CreateButton({ Title = "Soru [ $100,000 Beli ]" }, function
 	game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyHaki", "Soru")
 end)
 PageStatusAndServer = Main.CreatePage({ Page_Name = "Status And Server", Page_Title = "Status And Server" })
--- ===================== BananaCat Status UI (v4) =====================
-do
-	local Players = game:GetService("Players")
-	local lp = Players.LocalPlayer
-	local env = getgenv()
-
-	local UI_KEY = "Show BananaCat Status UI"
-	local BLUE = Color3.fromRGB(70, 140, 255)
-	local BG = Color3.fromRGB(10, 14, 26)
-
-	-- 1) Chuỗi ưu tiên (mỗi lúc chỉ 1 cái chạy, chiếm StackFarm = false)
-	local CHAIN = {
-		"Auto New World",
-		"Collect Chest When Server Spawn God's Chalice or Fist of Darkness",
-		"Auto Third World", "Attack Darkbeard", "Summon Darkbeard",
-		"Attack Rip Indra", "Auto Touch Pad Haki", "Auto Summon Rip Indra",
-		"Attack Soul Reaper", "Summon Soul Reaper", "Attack Dough King", "Summon Dough King",
-		"Auto Elite Hunter", "Auto Factory", "Auto Pirate Raid", "Teleport To Fruit",
-		"Auto Quest Dojo Trainer",
-	}
-	-- 2) Nhóm bị chặn bởi StackFarmOther (bị tạm dừng khi chuỗi ưu tiên đang chạy)
-	local GATED_OTHER = {
-		"Auto Collect Egg Easter", "Auto Fishing", "Auto Accept Quest Fishing",
-		"Auto Attack All Mob and Boss", "Auto Chest", "Kill Mob",
-	}
-	-- 3) Nhóm farm chạy vòng lặp riêng (bật = đang chạy)
-	local INDEPENDENT = {
-		"Auto Quest Dragon Hunter", "Auto Collect Berry", "Auto Chest Hop",
-		"Auto Buy Chip and Attack Law", "Auto UP Observation V2", "Farm Observation",
-		"Farm Observation [ Hop Server ]", "Kill Boss", "Kill All Boss",
-		"Auto Raid", "Auto Multi Raid", "Auto Awake Fruit", "Auto Join Dungeon", "Auto Attack Dungeon",
-		"Auto Sea Event", "Auto Sea Event With Friend", "Auto Find Mirage", "Auto Spawn Kitsune Island",
-		"Auto Summon Soul Ember", "Auto Collect Soul Ember", "Auto Trade Azure Ember",
-		"Auto Find Leviathan", "Multi Find Leviathan", "Auto Start Leviathan", "Auto Attack Leviathan",
-		"Auto Destroy IDK", "Auto Upgrade Race V2-V3", "Auto Upgrade Race V2-V3 Draco",
-		"Auto Trial", "Auto Trial Draco", "Multi Trial", "Auto Pull Lever",
-		"Auto Get Fully Cyborg", "Auto Get Cyborg", "Auto Get Ghoul",
-		"Auto Finish Train Quest", "Auto Finish Train Draco Quest",
-		"Auto Trade Bone", "Auto Get Rainbow Haki", "Auto Soul Guitar", "Auto CDK", "Auto Yama",
-		"Auto Tushita", "Auto TTK", "Auto Saber", "Auto Craft Item Shark Anchor", "Auto Yoru Mini",
-		"Auto Farm Mastery 600 Melees", "Auto Farm Mastery 600 Sword In Inventory",
-		"Auto Upgrade Sword Inventory", "Auto Upgrade Gun Inventory",
-		"Auto Crafting Volcanic Magnet", "Auto Find Prehistoric Island", "Auto Event Prehistoric Island",
-		"Auto Collect Bone", "Auto Collect Egg",
-	}
-
-	-- ---------- Owner của chuỗi ưu tiên ----------
-	-- Gọi ngay sau dòng `StackFarm = false` của từng nhánh: BananaOwner("Tên toggle")
-	local owner
-	function env.BananaOwner(name)
-		owner = name
-	end
-	BananaOwner = env.BananaOwner
-
-	local override, overrideUntil = nil, 0
-	function env.SetBananaStatus(text, ttl)
-		override = text and tostring(text) or nil
-		overrideUntil = tick() + (ttl or 4)
-	end
-
-	local hopDepth, teleportUntil = 0, 0
-	pcall(function()
-		lp.OnTeleport:Connect(function()
-			teleportUntil = tick() + 8
-		end)
-	end)
-	local wrapped = {}
-	local function hookHop()
-		for _, name in ipairs({ "HopServer", "HopLessAll" }) do
-			local cur = env[name]
-			if type(cur) == "function" and wrapped[name] ~= cur then
-				local orig = cur
-				local new = function(...)
-					hopDepth = hopDepth + 1
-					local r = table.pack(pcall(orig, ...))
-					hopDepth = math.max(0, hopDepth - 1)
-					if not r[1] then
-						error(r[2], 0)
-					end
-					return table.unpack(r, 2, r.n)
-				end
-				wrapped[name] = new
-				env[name] = new
-			end
-		end
-	end
-
-	-- ---------- Theo dõi di chuyển (fly) / đánh mob ----------
-	local lastMoveCF, lastMoveT = nil, 0
-	local lastBoatCF, lastBoatT = nil, 0
-	local lastMob, lastMobT = nil, 0
-	local lastFind, lastFindT = nil, 0
-
-	local function mobName(E)
-		if typeof(E) ~= "Instance" then
-			return nil
-		end
-		if E:IsA("Model") then
-			return E.Name
-		end
-		local p = E.Parent
-		if p and p:IsA("Model") then
-			return p.Name
-		end
-		return E.Name
-	end
-	local function onAttack(E)
-		local n = mobName(E)
-		if n then
-			lastMob, lastMobT = n, tick()
-		end
-	end
-	local function onMove(P)
-		if typeof(P) == "CFrame" then
-			lastMoveCF, lastMoveT = P, tick()
-		end
-	end
-	local function onBoat(_, F)
-		if typeof(F) == "CFrame" then
-			lastBoatCF, lastBoatT = F, tick()
-		end
-	end
-	local function onFind(Q)
-		local txt
-		if type(Q) == "string" then
-			txt = Q
-		elseif type(Q) == "table" then
-			local names = {}
-			for i = 1, math.min(#Q, 2) do
-				if type(Q[i]) == "string" then
-					names[#names + 1] = Q[i]
-				end
-			end
-			if #names > 0 then
-				txt = table.concat(names, "/")
-			end
-		end
-		if txt then
-			lastFind, lastFindT = txt, tick()
-		end
-	end
-
-	local function wrap(orig, pre)
-		return function(...)
-			pcall(pre, ...)
-			return orig(...)
-		end
-	end
-
-	-- Các hàm được định nghĩa muộn nên bọc dần trong vòng lặp (chỉ bọc 1 lần cho mỗi hàm)
-	local wTo, wBackup, wSize, wClick, wShoot, wDetect, wBoat
-	local function hookMovement()
-		if type(toTarget) == "function" and toTarget ~= wTo then
-			wTo = wrap(toTarget, onMove)
-			toTarget = wTo
-		end
-		if type(env.BackupTween) == "function" and env.BackupTween ~= wBackup then
-			wBackup = wrap(env.BackupTween, onMove)
-			env.BackupTween = wBackup
-		end
-		if type(sizepart) == "function" and sizepart ~= wSize then
-			wSize = wrap(sizepart, onAttack)
-			sizepart = wSize
-		end
-		if type(env.ClickM1) == "function" and env.ClickM1 ~= wClick then
-			wClick = wrap(env.ClickM1, onAttack)
-			env.ClickM1 = wClick
-		end
-		if type(ShootM1) == "function" and ShootM1 ~= wShoot then
-			wShoot = wrap(ShootM1, onAttack)
-			ShootM1 = wShoot
-		end
-		if type(DetectMob) == "function" and DetectMob ~= wDetect then
-			wDetect = wrap(DetectMob, onFind)
-			DetectMob = wDetect
-		end
-		if type(manageTween) == "function" and manageTween ~= wBoat then
-			wBoat = wrap(manageTween, onBoat)
-			manageTween = wBoat
-		end
-	end
-
-	-- Tên đảo gần điểm đến nhất
-	local locCache, locT = {}, 0
-	local function placeName(cf)
-		if typeof(cf) ~= "CFrame" then
-			return "?"
-		end
-		if tick() - locT > 5 then
-			locT = tick()
-			locCache = {}
-			pcall(function()
-				for _, p in ipairs(workspace._WorldOrigin.Locations:GetChildren()) do
-					if p:IsA("BasePart") then
-						locCache[#locCache + 1] = { p.Name, p.Position }
-					end
-				end
-			end)
-		end
-		local pos = cf.Position
-		local best, bd = nil, math.huge
-		for _, e in ipairs(locCache) do
-			local dx, dz = e[2].X - pos.X, e[2].Z - pos.Z
-			local d = math.sqrt(dx * dx + dz * dz)
-			if d < bd then
-				best, bd = e[1], d
-			end
-		end
-		if best and bd < 1500 then
-			return best
-		end
-		return string.format("%d, %d, %d", math.floor(pos.X), math.floor(pos.Y), math.floor(pos.Z))
-	end
-
-	-- ---------- Tính toggle farm đang HOẠT ĐỘNG ----------
-	local function on(k)
-		return Settings[k] == true
-	end
-
-	local function computeActive()
-		local out = {}
-		local stackFarm = StackFarm ~= false
-		local stackOther = StackFarmOther ~= false
-
-		-- Chuỗi ưu tiên đang chiếm quyền: chỉ hiện đúng nhánh đang chạy
-		if not stackFarm or not stackOther then
-			local name = owner
-			if not (name and on(name)) then
-				name = nil
-				for _, k in ipairs(CHAIN) do
-					if on(k) then
-						name = k
-						break
-					end
-				end
-			end
-			if name then
-				out[#out + 1] = name
-			end
-		end
-
-		-- Level farm: chỉ chạy khi StackFarm đang mở
-		if stackFarm and on("Start Farm") then
-			if on("Farm Material") then
-				out[#out + 1] = "Farm Material : " .. tostring(Settings["Select Material"] or "?")
-			else
-				out[#out + 1] = "Start Farm : " .. tostring(Settings["Select Method Farm"] or "Level Farm")
-			end
-			if on("Farm Mastery") then
-				out[#out + 1] = "Farm Mastery"
-			end
-		end
-
-		-- Nhóm bị tạm dừng khi chuỗi ưu tiên chạy
-		if stackOther then
-			for _, k in ipairs(GATED_OTHER) do
-				if on(k) then
-					out[#out + 1] = k
-				end
-			end
-		end
-
-		-- Nhóm chạy vòng lặp riêng
-		for _, k in ipairs(INDEPENDENT) do
-			if on(k) then
-				out[#out + 1] = k
-			end
-		end
-		return out
-	end
-
-	local function autoStatus(active)
-		if hopDepth > 0 then
-			return "Hopping server..."
-		end
-		if tick() < teleportUntil then
-			return "Teleporting..."
-		end
-		local char = lp.Character
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		if not hum or hum.Health <= 0 then
-			return "Waiting for respawn..."
-		end
-
-		local now = tick()
-		local act = active[1]
-		local suffix = act and (" | " .. act) or ""
-
-		-- Đang đánh mob / boss (mọi chế độ farm): ghi rõ tên
-		if lastMob and now - lastMobT < 1.5 then
-			return "Fighting " .. lastMob .. suffix
-		end
-		-- Đang lái thuyền
-		if lastBoatCF and now - lastBoatT < 1.5 then
-			return "Sailing boat to " .. placeName(lastBoatCF) .. suffix
-		end
-		-- Đang bay/tween tới điểm đến
-		if lastMoveCF and now - lastMoveT < 1.0 then
-			local find = (lastFind and now - lastFindT < 2) and (" (find " .. lastFind .. ")") or ""
-			return "Traveling to " .. placeName(lastMoveCF) .. find .. suffix
-		end
-
-		-- Không di chuyển / không đánh: mô tả việc đang làm
-		if not act then
-			return "Idle"
-		end
-		if string.sub(act, 1, 10) == "Start Farm" then
-			local okQ, quest = pcall(GetQuestTitle)
-			if okQ and quest then
-				return act .. " | waiting mob : " .. string.sub(tostring(quest), 1, 50)
-			end
-			return act .. " | taking quest..."
-		end
-		return "Running : " .. act
-	end
-
-	-- ---------- UI ----------
-	local function getParent()
-		if gethui then
-			local ok, ui = pcall(gethui)
-			if ok and ui then
-				return ui
-			end
-		end
-		local ok, core = pcall(function()
-			return game:GetService("CoreGui")
-		end)
-		if ok and core then
-			return core
-		end
-		return lp:WaitForChild("PlayerGui")
-	end
-
-	local parent = getParent()
-	local old = parent:FindFirstChild("BananaCatStatusUI")
-	if old then
-		old:Destroy()
-	end
-
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "BananaCatStatusUI"
-	gui.ResetOnSpawn = false
-	gui.IgnoreGuiInset = true
-	gui.DisplayOrder = 999
-	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	gui.Enabled = Settings[UI_KEY] ~= false
-	gui.Parent = parent
-
-	local frame = Instance.new("Frame")
-	frame.Name = "Main"
-	frame.AnchorPoint = Vector2.new(0.5, 0)
-	frame.Position = UDim2.new(0.5, 0, 0, 12)
-	frame.Size = UDim2.new(0.9, 0, 0, 0)
-	frame.AutomaticSize = Enum.AutomaticSize.Y
-	frame.BackgroundColor3 = BG
-	frame.BackgroundTransparency = 0.05
-	frame.BorderSizePixel = 0
-	frame.Parent = gui
-
-	local sizeLimit = Instance.new("UISizeConstraint")
-	sizeLimit.MaxSize = Vector2.new(480, math.huge)
-	sizeLimit.Parent = frame
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 16)
-	corner.Parent = frame
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = BLUE
-	stroke.Thickness = 2
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = frame
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 22)
-	padding.PaddingRight = UDim.new(0, 22)
-	padding.PaddingTop = UDim.new(0, 14)
-	padding.PaddingBottom = UDim.new(0, 14)
-	padding.Parent = frame
-	local list = Instance.new("UIListLayout")
-	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Padding = UDim.new(0, 6)
-	list.Parent = frame
-
-	local function makeLabel(text, color, size, order)
-		local l = Instance.new("TextLabel")
-		l.BackgroundTransparency = 1
-		l.Size = UDim2.new(1, 0, 0, 0)
-		l.AutomaticSize = Enum.AutomaticSize.Y
-		l.Font = Enum.Font.GothamBold
-		l.Text = text
-		l.TextColor3 = color
-		l.TextSize = size
-		l.TextWrapped = true
-		l.TextXAlignment = Enum.TextXAlignment.Left
-		l.LayoutOrder = order
-		l.Parent = frame
-		return l
-	end
-
-	makeLabel("BananaCat Status", BLUE, 20, 1)
-	local statusLabel = makeLabel("Status : ...", Color3.fromRGB(255, 255, 255), 18, 2)
-
-	local lastStatus
-	local function refresh()
-		local active = computeActive()
-		local text = (override and tick() < overrideUntil) and override or autoStatus(active)
-		local st = "Status : " .. text
-		if st ~= lastStatus then
-			lastStatus = st
-			statusLabel.Text = st
-		end
-	end
-
-	task.spawn(function()
-		while gui.Parent do
-			pcall(hookHop)
-			pcall(hookMovement)
-			pcall(refresh)
-			task.wait(0.3)
-		end
-	end)
-
-	-- ---------- Toggle ở đầu tab Status And Server ----------
-	local SectionStatusUI = PageStatusAndServer.CreateSection("BananaCat Status UI")
-	SectionStatusUI.CreateToggle({
-		Title = "Show BananaCat Status UI",
-		Desc = "Show what the script is doing at the top of the screen",
-		Default = Settings[UI_KEY] ~= false,
-	}, function(v)
-		SaveSettings(UI_KEY, v)
-		gui.Enabled = v
-	end)
-end
--- ===================== end BananaCat Status UI =====================
+	-- FROST BLADE Status UI removido da interface por solicitação do usuário.
 SectionStatus = PageStatusAndServer.CreateSection("Status")
 TimerLabel = SectionStatus.CreateLabel({ Title = "Timer" })
 TimerServerLabel = SectionStatus.CreateLabel({ Title = "Timer Server" })
@@ -2130,7 +2988,11 @@ end
 local f = loadstring(
 	'local function EQ(a, r)\10 local b, c = nil, nil\10 local success = pcall(function()\10 b, c = a, r\10 end)\10\10 if not success or b == nil or c == nil then\10 return false\10 end\10\10 if type(b) ~= type(c) then\10 return false\10 end\10\10 local d = { c, b, c, b }\10 if d[1] ~= d[1] then\10 return false\10 end\10 if d[1] ~= d[2] then\10 return false\10 end\10 if d[2] ~= d[1] then\10 return false\10 end\10\10 local e, f, g = 1 and 2, 2 and nil, true == not not true\10\10 if type(b) == "number" and type(c) == "number" then\10 if e and g and not f then\10 return b == c\10 end\10 elseif type(b) == "string" and type(c) == "string" then\10 if e and g then\10 return b == c\10 end\10 else\10 return b == c\10 end\10\10 return false\10end\10\10local function _vrf()\10 local x = os.time and os.time() or 12345\10 if tostring(print):find("function") == nil then\10 while true do\10 end\10 end\10 if tostring(type):find("function") == nil then\10 while true do\10 end\10 end\10 if (x * x + x) % 2 ~= 0 then\10 while true do\10 end\10 end\10 if not EQ(x, x) then\10 while true do\10 end\10 end\10end\10\10local function _gct()\10 _vrf()\10 local s, p1, p2, p3 = 17, {}, {}, {}\10 local _m = { [17] = 23, [23] = 41, [41] = 999 }\10\10 while true do\10 if s == 17 then\10 for i = 0, 255 do\10 local c = ("%c"):format(i)\10 p1[i] = c\10 p2[c] = i\10 end\10 s = _m[17]\10 elseif s == 23 then\10 for i = 0, 255 do\10 p3[i] = p1[i]\10 end\10 s = _m[23]\10 elseif s == 41 then\10 if EQ(s, 41) then\10 return p3, p2\10 else\10 while true do\10 end\10 end\10 else\10 while true do\10 end\10 end\10 end\10end\10\10local _CT, _BT = _gct()\10\10local _sp = (function()\10 local _xk = { 0x61, 0x9A, 0x43, 0xF1, 0x27, 0xBC, 0x58, 0x0D, 0xE7, 0x33 }\10\10 local _enc = {\10 { 0x9A, 0x71, 0x24, 0xEF, 0x38, 0x4C },\10 { 0x7D, 0xA1, 0x55, 0x92, 0xB7, 0x44, 0x18 },\10 { 0x2F, 0xC3, 0x89, 0x11, 0xD4, 0x67 },\10 { 0xA8, 0x3E, 0xD1, 0x5B },\10 { 0x44, 0xE2, 0x71, 0x9C, 0x0A, 0xD8, 0x61, 0xF4 },\10 { 0x1E, 0x7B, 0xC0, 0x35, 0x92, 0xAF, 0x4D, 0x28 },\10 { 0xF3, 0x60, 0x1A, 0x87, 0xCE, 0x39, 0x54 },\10 { 0x88, 0x2D, 0xB6, 0x41, 0xFA, 0x73, 0x19, 0xCC, 0x05 },\10 }\10\10 local function _dec(data, seed)\10 local result = ""\10 local state = seed or 0x53\10\10 for i = 1, #data do\10 local byte = data[i]\10 local keyIdx = ((i - 1) % #_xk) + 1\10 local key = _xk[keyIdx]\10\10 byte = bit32.bxor(byte, key)\10 byte = (byte - state + 256) % 256\10 byte = bit32.bxor(byte, (i * 23) % 256)\10 state = (state + i + key + 17) % 256\10\10 result = result .. _CT[byte]\10 end\10\10 return result\10 end\10\10 local _d = {}\10 for i = 1, #_enc do\10 _d[i] = _dec(_enc[i], (i * 0x29) % 256)\10 end\10\10 return _d\10end)()\10\10local function _gb(str, pos)\10 _vrf()\10 local c, s = 0, 5\10 local _states = { [5] = 7, [7] = 11, [11] = 999 }\10\10 while true do\10 if s == 5 then\10 for ch in str:gmatch(".") do\10 c = c + 1\10 if c == pos then\10 s = _states[5]\10 break\10 end\10 end\10 if s ~= 7 then\10 s = _states[11]\10 end\10 elseif s == 7 then\10 local ch = ""\10 local cnt = 0\10 for c2 in str:gmatch(".") do\10 cnt = cnt + 1\10 if cnt == pos then\10 ch = c2\10 break\10 end\10 end\10 if EQ(_BT[ch] or 0, _BT[ch] or 0) then\10 return _BT[ch] or 0\10 end\10 elseif s == 11 then\10 return 0\10 end\10 end\10end\10\10local function _tc(num)\10 if EQ(num, num) then\10 return _CT[num % 256]\10 end\10 while true do\10 end\10end\10\10local function _js(tbl)\10 local r, s = "", 3\10 local _sm = { [3] = 8, [8] = 999 }\10\10 while true do\10 if s == 3 then\10 for i = 1, #tbl do\10 r = r .. tbl[i]\10 end\10 s = _sm[3]\10 elseif s == 8 then\10 if EQ(r, r) then\10 return r\10 end\10 end\10 end\10end\10\10local function _gl(str)\10 _vrf()\10 local c = 0\10 for _ in str:gmatch(".") do\10 c = c + 1\10 end\10 if EQ(c, c) then\10 return c\10 end\10 return 0\10end\10\10local function _rp(str, pat, rep)\10 _vrf()\10 local r, pl, m = "", _gl(pat), true\10\10 for i = 1, pl do\10 if _gb(str, i) ~= _gb(pat, i) then\10 m = false\10 break\10 end\10 end\10\10 if m and EQ(m, true) then\10 r = rep\10 for i = pl + 1, _gl(str) do\10 local ch = ""\10 local cnt = 0\10 for c in str:gmatch(".") do\10 cnt = cnt + 1\10 if cnt == i then\10 ch = c\10 break\10 end\10 end\10 r = r .. ch\10 end\10 return r\10 end\10\10 return str\10end\10\10local function _cs(...)\10 local args, r = { ... }, ""\10 for i = 1, #args do\10 r = r .. args[i]\10 end\10 if EQ(r, r) then\10 return r\10 end\10 return ""\10end\10\10local function _gks(key, len)\10 _vrf()\10 local ks, kl, st = {}, _gl(key), 0\10\10 for i = 1, len do\10 local kp = ((i - 1) % kl) + 1\10 local kb = _gb(key, kp)\10 st = (st + kb + i + ((i * 11) % 256)) % 256\10 ks[i] = (kb + st + (i * 17) + ((kb * 3) % 256)) % 256\10 end\10\10 if EQ(#ks, len) then\10 return ks\10 end\10 return {}\10end\10\10local function _mix_key_material(key, salt)\10 _vrf()\10 local rev = key:reverse()\10 local out = {}\10 local src = _cs(key, salt, rev, _tc(_gl(key) % 256), _tc(_gl(salt) % 256))\10\10 for i = 1, _gl(src) do\10 local b = _gb(src, i)\10 b = bit32.bxor(b, (i * 29) % 256)\10 b = (b + ((i * 7) % 256)) % 256\10 out[i] = _tc(b)\10 end\10\10 return _js(out)\10end\10\10local function _derive_stream(key, salt, len)\10 _vrf()\10 local km = _mix_key_material(key, salt)\10 return _gks(km, len)\10end\10\10local function _randb()\10 return math.random(0, 255)\10end\10\10local function _gensalt128()\10 _vrf()\10 local t = {}\10 for i = 1, 16 do\10 t[i] = _tc(_randb())\10 end\10 return _js(t)\10end\10\10local function _secure_round_enc(key, data, salt, round_idx)\10 _vrf()\10 local dl = _gl(data)\10 local ks = _derive_stream(_cs(key, _tc(48 + round_idx)), salt, dl)\10 local r = {}\10 local st = (_gl(key) + _gl(salt) + round_idx * 37 + 91) % 256\10\10 for i = 1, dl do\10 local db = _gb(data, i)\10 local sb = _gb(salt, ((i + round_idx - 2) % 16) + 1)\10 local kk = ks[i]\10\10 st = (st + kk + sb + i + round_idx) % 256\10\10 local enc = db\10 enc = bit32.bxor(enc, kk)\10 enc = (enc + st + sb) % 256\10 enc = bit32.bxor(enc, ((i * 31) + sb + round_idx * 9) % 256)\10 enc = (enc + ((kk * 5) % 256)) % 256\10\10 r[i] = _tc(enc)\10 end\10\10 return _js(r)\10end\10\10local function _secure_round_dec(key, data, salt, round_idx)\10 _vrf()\10 local dl = _gl(data)\10 local ks = _derive_stream(_cs(key, _tc(48 + round_idx)), salt, dl)\10 local r = {}\10 local st = (_gl(key) + _gl(salt) + round_idx * 37 + 91) % 256\10\10 for i = 1, dl do\10 local sb = _gb(salt, ((i + round_idx - 2) % 16) + 1)\10 local kk = ks[i]\10\10 st = (st + kk + sb + i + round_idx) % 256\10\10 local eb = _gb(data, i)\10\10 local db = eb\10 db = (db - ((kk * 5) % 256) + 256) % 256\10 db = bit32.bxor(db, ((i * 31) + sb + round_idx * 9) % 256)\10 db = (db - st - sb + 512) % 256\10 db = bit32.bxor(db, kk)\10\10 r[i] = _tc(db)\10 end\10\10 return _js(r)\10end\10\10local function _ae(key, data, salt, rnd)\10 _vrf()\10 rnd = rnd or 3\10 local r = data\10\10 for rd = 1, rnd do\10 r = _secure_round_enc(key, r, salt, rd)\10 if not EQ(r, r) then\10 while true do\10 end\10 end\10 end\10\10 return r\10end\10\10local function _ad(key, data, salt, rnd)\10 _vrf()\10 rnd = rnd or 3\10 local r = data\10\10 for rd = rnd, 1, -1 do\10 r = _secure_round_dec(key, r, salt, rd)\10 if not EQ(r, r) then\10 while true do\10 end\10 end\10 end\10\10 return r\10end\10\10local _b64 = (function()\10 local chs = string.char(\10 65,\10 66,\10 67,\10 68,\10 69,\10 70,\10 71,\10 72,\10 73,\10 74,\10 75,\10 76,\10 77,\10 78,\10 79,\10 80,\10 81,\10 82,\10 83,\10 84,\10 85,\10 86,\10 87,\10 88,\10 89,\10 90,\10 97,\10 98,\10 99,\10 100,\10 101,\10 102,\10 103,\10 104,\10 105,\10 106,\10 107,\10 108,\10 109,\10 110,\10 111,\10 112,\10 113,\10 114,\10 115,\10 116,\10 117,\10 118,\10 119,\10 120,\10 121,\10 122,\10 48,\10 49,\10 50,\10 51,\10 52,\10 53,\10 54,\10 55,\10 56,\10 57,\10 43,\10 47\10 )\10\10 local function enc(data)\10 _vrf()\10 local r, dl = {}, _gl(data)\10 local i = 1\10\10 while i <= dl do\10 local b1 = _gb(data, i)\10 local b2 = i + 1 <= dl and _gb(data, i + 1) or 0\10 local b3 = i + 2 <= dl and _gb(data, i + 2) or 0\10\10 local n = b1 * 65536 + b2 * 256 + b3\10\10 local c1 = (n // 262144) % 64 + 1\10 local c2 = (n // 4096) % 64 + 1\10 local c3 = (n // 64) % 64 + 1\10 local c4 = n % 64 + 1\10\10 r[#r + 1] = _gb(chs, c1)\10 r[#r + 1] = _gb(chs, c2)\10 r[#r + 1] = i + 1 <= dl and _gb(chs, c3) or 61\10 r[#r + 1] = i + 2 <= dl and _gb(chs, c4) or 61\10\10 i = i + 3\10 end\10\10 local out = {}\10 for idx = 1, #r do\10 out[idx] = _tc(r[idx])\10 end\10\10 if EQ(_js(out), _js(out)) then\10 return _js(out)\10 end\10 return ""\10 end\10\10 local function dec(data)\10 _vrf()\10 local r, dl = {}, _gl(data)\10 local i = 1\10\10 while i <= dl do\10 local c1 = _gb(data, i)\10 local c2 = _gb(data, i + 1)\10 local c3 = _gb(data, i + 2)\10 local c4 = _gb(data, i + 3)\10\10 local function fp(byte)\10 if byte == 61 then\10 return 0\10 end\10 for p = 1, 64 do\10 if _gb(chs, p) == byte then\10 return p - 1\10 end\10 end\10 return 0\10 end\10\10 local n1, n2, n3, n4 = fp(c1), fp(c2), fp(c3), fp(c4)\10 local n = n1 * 262144 + n2 * 4096 + n3 * 64 + n4\10\10 r[#r + 1] = _tc((n // 65536) % 256)\10 if c3 ~= 61 then\10 r[#r + 1] = _tc((n // 256) % 256)\10 end\10 if c4 ~= 61 then\10 r[#r + 1] = _tc(n % 256)\10 end\10\10 i = i + 4\10 end\10\10 if EQ(_js(r), _js(r)) then\10 return _js(r)\10 end\10 return ""\10 end\10\10 return { encode = enc, decode = dec }\10end)()\10\10local function _seed_rng()\10 local seed = (os.time and os.time() or 12345)\10 + math.floor((os.clock and os.clock() or 0) * 100000)\10 + math.random(1, 999999)\10\10 math.randomseed(seed)\10 math.random()\10 math.random()\10 math.random()\10end\10\10_seed_rng()\10\10local function ebgzqifrwa(plaintext)\10 _vrf()\10 local k = _cs(_sp[5], _sp[6], _sp[7], _sp[8])\10 if not EQ(k, k) then\10 while true do\10 end\10 end\10\10 local salt = _gensalt128()\10 local enc = _ae(k, plaintext, salt, 3)\10 local payload = _cs(salt, enc)\10 local b64 = _b64.encode(payload)\10\10 if EQ(b64, b64) then\10 return _cs("BananaCat-", b64)\10 end\10 return ""\10end\10\10local function lebidlyjyf(encrypted)\10 _vrf()\10 local k = _cs(_sp[5], _sp[6], _sp[7], _sp[8])\10 if not EQ(k, k) then\10 while true do\10 end\10 end\10\10 local ed = _rp(encrypted, "BananaCat-", "")\10 local dc = _b64.decode(ed)\10\10 if _gl(dc) < 16 then\10 return ""\10 end\10\10 local salt_tbl = {}\10 local data_tbl = {}\10\10 for i = 1, 16 do\10 salt_tbl[#salt_tbl + 1] = _tc(_gb(dc, i))\10 end\10\10 for i = 17, _gl(dc) do\10 data_tbl[#data_tbl + 1] = _tc(_gb(dc, i))\10 end\10\10 local salt = _js(salt_tbl)\10 local data = _js(data_tbl)\10\10 if EQ(data, data) then\10 return _ad(k, data, salt, 3)\10 end\10 return ""\10end\10return ebgzqifrwa, lebidlyjyf\10'
 )
-Realm = require(game:GetService("ReplicatedStorage").Util.Realm)
+local _realmOk,_realmResult=pcall(function()
+    return require(game:GetService("ReplicatedStorage").Util.Realm)
+end)
+Realm=_realmOk and _realmResult or {}
+if not _realmOk then warn("[FROST BLADE] Util.Realm indisponivel: "..tostring(_realmResult)) end
 function tryTeleport(K, R, m)
 	local E, l = pcall(function()
 		game:GetService("TeleportService"):TeleportToPlaceInstance(K, R, t)
@@ -2179,17 +3041,17 @@ SectionServer.CreateButton({ Title = "Copy JobId" }, function()
 end)
 local G, K = {}, {}
 if not pcall(function()
-	readfile("Banana Cat Hub/Jobid.json")
+	readfile("FROST BLADE HUB/Jobid.json")
 end) then
-	writefile("Banana Cat Hub/Jobid.json", game:GetService("HttpService"):JSONEncode(G))
+	writefile("FROST BLADE HUB/Jobid.json", game:GetService("HttpService"):JSONEncode(G))
 end
 if not pcall(function()
-	readfile("Banana Cat Hub/NotSameServers.json")
+	readfile("FROST BLADE HUB/NotSameServers.json")
 end) then
-	writefile("Banana Cat Hub/NotSameServers.json", game:GetService("HttpService"):JSONEncode(G))
+	writefile("FROST BLADE HUB/NotSameServers.json", game:GetService("HttpService"):JSONEncode(G))
 end
 function CheckJobIdServer()
-	local R, m, E, l = {}, next, game:GetService("HttpService"):JSONDecode(readfile("Banana Cat Hub/Jobid.json"))
+	local R, m, E, l = {}, next, game:GetService("HttpService"):JSONDecode(readfile("FROST BLADE HUB/Jobid.json"))
 	for Q, S in m, E, l do
 		table.insert(R, Q)
 	end
@@ -2201,7 +3063,7 @@ function HopServer(R)
 			for l, Q in pairs((game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer(E))) do
 				if l ~= game.JobId and not table.find(CheckJobIdServer(), l) then
 					game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer("teleport", l)
-					writefile("Banana Cat Hub/Jobid.json", game:GetService("HttpService"):JSONEncode(K))
+					writefile("FROST BLADE HUB/Jobid.json", game:GetService("HttpService"):JSONEncode(K))
 					getgenv().limit_type("clearAll")
 				end
 			end
@@ -2209,11 +3071,11 @@ function HopServer(R)
 	end
 	local K = R or (Settings["Time Hop Server"] or 5)
 	require(game:GetService("ReplicatedStorage").Notification)
-		.new("<Color=Red>Banana Cat Hub : Wait " .. K .. "s [Hop Server]<Color=/>")
+		.new("<Color=Red>FROST BLADE HUB : Wait " .. K .. "s [Hop Server]<Color=/>")
 		:Display()
 	while wait(K) do
 		require(game:GetService("ReplicatedStorage").Notification)
-			.new("<Color=Red>Banana Cat Hub : Hop Server<Color=/>")
+			.new("<Color=Red>FROST BLADE HUB : Hop Server<Color=/>")
 			:Display()
 		m()
 	end
@@ -2228,11 +3090,11 @@ function HopLessAll()
 	local K, R, m, E = game.PlaceId, {}, "", os.date("!*t").hour
 	if
 		not pcall(function()
-			R = game:GetService("HttpService"):JSONDecode(readfile("Banana Cat Hub/NotSameServers.json"))
+			R = game:GetService("HttpService"):JSONDecode(readfile("FROST BLADE HUB/NotSameServers.json"))
 		end)
 	then
 		table.insert(R, E)
-		writefile("Banana Cat Hub/NotSameServers.json", game:GetService("HttpService"):JSONEncode(R))
+		writefile("FROST BLADE HUB/NotSameServers.json", game:GetService("HttpService"):JSONEncode(R))
 	end
 	function HopServerLess()
 		local l, Q =
@@ -2263,7 +3125,7 @@ function HopLessAll()
 						m = if Q == tostring(l) then false else m
 					elseif tonumber(E) ~= tonumber(l) then
 						pcall(function()
-							delfile("Banana Cat Hub/NotSameServers.json")
+							delfile("FROST BLADE HUB/NotSameServers.json")
 							R = {}
 							table.insert(R, E)
 						end)
@@ -2274,7 +3136,7 @@ function HopLessAll()
 					table.insert(R, Q)
 					wait()
 					pcall(function()
-						writefile("Banana Cat Hub/NotSameServers.json", game:GetService("HttpService"):JSONEncode(R))
+						writefile("FROST BLADE HUB/NotSameServers.json", game:GetService("HttpService"):JSONEncode(R))
 						wait()
 						game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer("teleport", Q)
 						getgenv().limit_type("clearAll")
@@ -6203,11 +7065,11 @@ local function _(o, V)
 			Precise = true,
 		}
 	end
-	HoldSkillsSection.CreateDropdown({ Title = "Set Delay " .. o, List = N, Slider = true }, function(V, V)
-		if V and V.KeyName then
-			SaveSettings("Skill " .. V.KeyName .. " " .. o, V.Default)
-		end
-	end)
+	HoldSkillsSection.CreateDropdown({ Title = "Set Delay " .. o, List = N, Slider = true }, function(item)
+        if type(item)=="table" and item.KeyName then
+            SaveSettings("Skill " .. item.KeyName .. " " .. o, item.Default)
+        end
+    end)
 end
 HoldSkillsSection.CreateToggle(
 	{ Title = "Use skill fast dont hold", Desc = nil, Default = Settings["Use skill fast dont hold"] or false },
@@ -6297,7 +7159,7 @@ MasteryFarmSection.CreateToggle(
 	function(V)
 		SaveSettings("Farm Mastery", V)
 		if V and not Settings["Start Farm"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Start Farm Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Start Farm Plz", ShowTime = 5 })
 		end
 	end
 )
@@ -6319,7 +7181,7 @@ FarmingMaterialSection.CreateToggle(
 	function(V)
 		SaveSettings("Farm Material", V)
 		if V and not Settings["Start Farm"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Start Farm Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Start Farm Plz", ShowTime = 5 })
 		end
 	end
 )
@@ -7323,7 +8185,7 @@ BossSoulReaperSection.CreateToggle(
 	{ Title = "Summon Soul Reaper", Desc = nil, Default = Settings["Summon Soul Reaper"] or false },
 	function(f)
 		if f and not Settings["Attack Soul Reaper"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Attack Soul Reaper Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Attack Soul Reaper Plz", ShowTime = 5 })
 		end
 		SaveSettings("Summon Soul Reaper", f)
 	end
@@ -7339,7 +8201,7 @@ BossDoughKingSection.CreateToggle(
 	{ Title = "Summon Dough King", Desc = nil, Default = Settings["Summon Dough King"] or false },
 	function(f)
 		if f and not Settings["Attack Dough King"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Attack Dough King Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Attack Dough King Plz", ShowTime = 5 })
 		end
 		if f then
 			spawn(function()
@@ -7357,7 +8219,7 @@ BossDoughKingSection.CreateToggle(
 	{ Title = "Hop Find Dough King", Desc = nil, Default = Settings["Hop Find Dough King"] or false },
 	function(f)
 		if f and not Settings["Attack Dough King"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Attack Dough King Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Attack Dough King Plz", ShowTime = 5 })
 		end
 		SaveSettings("Hop Find Dough King", f)
 	end
@@ -7373,7 +8235,7 @@ BossDarkbeardSection.CreateToggle(
 	{ Title = "Summon Darkbeard", Desc = nil, Default = Settings["Summon Darkbeard"] or false },
 	function(f)
 		if f and not Settings["Attack Darkbeard"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Attack Darkbeard Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Attack Darkbeard Plz", ShowTime = 5 })
 		end
 		SaveSettings("Summon Darkbeard", f)
 	end
@@ -7382,7 +8244,7 @@ BossDarkbeardSection.CreateToggle(
 	{ Title = "Hop Find Darkbeard", Desc = nil, Default = Settings["Hop Find Darkbeard"] or false },
 	function(f)
 		if f and not Settings["Attack Darkbeard"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Attack Darkbeard Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Attack Darkbeard Plz", ShowTime = 5 })
 		end
 		SaveSettings("Hop Find Darkbeard", f)
 	end
@@ -8218,7 +9080,7 @@ task.spawn(function()
 										return
 									else
 										A.CreateNoti({
-											Title = "Banana Cat Hub",
+											Title = "FROST BLADE HUB",
 											Desc = "Waiting Elite Hunter",
 											ShowTime = 5,
 										})
@@ -8387,44 +9249,88 @@ task.spawn(function()
 	end
 end)
 FarmotherMain = Main.CreatePage({ Page_Name = "Farming Other", Page_Title = "Farming Other" })
-EventEasterSection = FarmotherMain.CreateSection("Event Easter")
-EventEasterSection.CreateButton({ Title = "Open Easter Shop" }, function()
-	require(game.ReplicatedStorage.Controllers.UI.EventShop):Open("Easter2026")
-end)
-function DetectEgg()
-	local V, y, P = t.Character.PrimaryPart.Position, 1 / 0
-	for Y, H in pairs(game:GetService("CollectionService"):GetTagged("EasterEgg26")) do
-		Y = (V - H:GetAttribute("CFrame").Position).Magnitude
-		if Y < y then
-			y, P = Y, H
-		end
-	end
-	return P
+-- ☢️ RISCO: Kill Aura fixa em NPCs num raio de 350 studs; nunca move o jogador.
+-- Usa AttackFunction/AttackAOE ja existentes no hub, passando d=false para
+-- atingir APENAS modelos em workspace.Enemies (nao jogadores).
+-- O servidor do jogo ainda pode rejeitar golpes fora do alcance legitimo.
+RiscoSection = FarmotherMain.CreateSection("☢️ RISCO")
+local RISCO_RAIO = 350
+local riscoRodando = false
+local riscoGeracao = 0
+local function riscoEncontrarAlvo()
+    local char = game.Players.LocalPlayer.Character
+    local raiz = char and char:FindFirstChild("HumanoidRootPart")
+    local pasta = workspace:FindFirstChild("Enemies")
+    if not raiz or not pasta then return false end
+    -- Magnitude = distancia real; nao modifica CFrame/posicao do jogador.
+    local pos = raiz.Position
+    for _, npc in ipairs(pasta:GetChildren()) do
+        if npc:IsA("Model") then
+            local hum = npc:FindFirstChildOfClass("Humanoid")
+            local npcRaiz = npc:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and npcRaiz
+                and (npcRaiz.Position - pos).Magnitude <= RISCO_RAIO then
+                return true
+            end
+        end
+    end
+    return false
 end
-EventEasterSection.CreateToggle(
-	{ Title = "Auto Collect Egg Easter", Desc = nil, Default = Settings["Auto Collect Egg Easter"] or false },
-	function(V)
-		if V then
-			spawn(function()
-				while Settings["Auto Collect Egg Easter"] and (task.wait()) do
-					local y, y = pcall(function()
-						if not StackFarmOther then
-							return
-						end
-						local P = DetectEgg()
-						if P then
-							toTarget(P:GetAttribute("CFrame"))
-						end
-					end)
-					if y then
-						print(y)
-					end
-				end
-			end)
-		end
-		SaveSettings("Auto Collect Egg Easter", V)
-	end
+local function iniciarRisco()
+    if riscoRodando then return end
+    riscoRodando = true
+    riscoGeracao += 1
+    local geracaoAtual = riscoGeracao
+    task.spawn(function()
+        while Settings["Risco Ataque Rapido NPC"] and geracaoAtual == riscoGeracao do
+            local frequencia = math.clamp(tonumber(Settings["Risco Velocidade Ataque"]) or 10, 1, 16)
+            if riscoEncontrarAlvo() then
+                local ok, err = pcall(function()
+                    local char = game.Players.LocalPlayer.Character
+                    local hum = char and char:FindFirstChildOfClass("Humanoid")
+                    if not hum or hum.Health <= 0 then return end
+                    -- Equipar arma escolhida apenas quando necessario, sem mover personagem.
+                    local tipo = Settings["Select Weapon"] or "Melee"
+                    local arma = NameWeapon(tipo)
+                    if arma and not char:FindFirstChild(arma) then
+                        equiptool(arma)
+                    end
+                    -- Diferente de ClickM1 (que rejeita alvos acima de 70 studs),
+                    -- esta funcao usa a deteccao de acerto em area com alcance configurado.
+                    -- AttackAOE(RISCO_RAIO,false) mantem o filtro para NPCs somente.
+                    if type(AttackFunction) == "function" then
+                        AttackFunction(RISCO_RAIO)
+                    end
+                end)
+                if not ok then
+                    warn("[FROST BLADE / ☢️ RISCO] " .. tostring(err))
+                end
+            end
+            task.wait(1 / frequencia)
+        end
+        if geracaoAtual == riscoGeracao then riscoRodando = false end
+    end)
+end
+RiscoSection.CreateToggle(
+    { Title = "☢️ Kill Aura NPCs (350 studs)", Desc = "Tenta atingir NPCs a ate 350 studs, sem andar ou teletransportar. O servidor valida os golpes.", Default = Settings["Risco Ataque Rapido NPC"] == true },
+    function(ligado)
+        SaveSettings("Risco Ataque Rapido NPC", ligado == true)
+        if ligado then
+            iniciarRisco()
+        else
+            riscoGeracao += 1
+            riscoRodando = false
+        end
+    end
 )
+RiscoSection.CreateSlider(
+    { Title = "Velocidade Kill Aura (golpes/s)", Min = 1, Max = 16, Default = math.clamp(tonumber(Settings["Risco Velocidade Ataque"]) or 10, 1, 16), Precise = false },
+    function(valor)
+        SaveSettings("Risco Velocidade Ataque", math.clamp(math.floor((tonumber(valor) or 10) + 0.5), 1, 16))
+    end
+)
+-- Quando o estado foi salvo como ligado, reiniciar a rotina apos criar os controles.
+if Settings["Risco Ataque Rapido NPC"] then iniciarRisco() end
 FishingSection = FarmotherMain.CreateSection("Fishing")
 FishingSection.CreateToggle(
 	{ Title = "Change Size Reel", Desc = nil, Default = Settings["Change Size Reel"] or false },
@@ -9070,7 +9976,7 @@ function AutoQuestDojo()
 				getgenv().QuestTrainer = { BeltName = "Red", CountKillMob = 0 }
 			else
 				A.CreateNoti({
-					Title = "Banana Cat Hub",
+					Title = "FROST BLADE HUB",
 					Desc = "That's enough training for today... Come back tomorrow and we can continue.\10 or dont support Belt Currently",
 					ShowTime = 5,
 				})
@@ -9652,7 +10558,7 @@ BerrySection.CreateToggle(
 								end
 							end
 						else
-							A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Waiting Berry spawn", ShowTime = 5 })
+							A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Waiting Berry spawn", ShowTime = 5 })
 							if Settings["Hop Find Berry"] then
 								HopServer()
 							end
@@ -9932,7 +10838,7 @@ function ObservationV2()
 					equiptool(NameWeapon(Settings["Select Weapon"]))
 				until not IsMobAlive(y) or not Settings["Auto UP Observation V2"]
 			else
-				A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Waiting Boss Captain Elephant", ShowTime = 5 })
+				A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Waiting Boss Captain Elephant", ShowTime = 5 })
 				wait(5)
 			end
 		elseif t:DistanceFromCharacter(Vector3.new(-12441.5908203125, 331.4884948730469, -7676.197265625)) < 10 then
@@ -9967,7 +10873,7 @@ function ObservationV2()
 								0
 							)
 						else
-							A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Wating Fruit", ShowTime = 5 })
+							A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Wating Fruit", ShowTime = 5 })
 							wait(3)
 						end
 					end
@@ -10041,7 +10947,7 @@ FarmObservationSection.CreateToggle(
 	},
 	function(y)
 		if y and not Settings["Farm Observation"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Farm Observation plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Farm Observation plz", ShowTime = 5 })
 		end
 		SaveSettings("Farm Observation [ Hop Server ]", y)
 	end
@@ -10273,7 +11179,7 @@ AutoKillBossSection.CreateToggle(
 	{ Title = "Kill All Boss", Desc = nil, Default = Settings["Kill All Boss"] or false },
 	function(y)
 		if y and not Settings["Kill Boss"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Kill Boss plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Kill Boss plz", ShowTime = 5 })
 		end
 		SaveSettings("Kill All Boss", y)
 	end
@@ -10601,7 +11507,7 @@ RaidsSection.CreateToggle(
 	{ Title = "Hop Sever Raid", Desc = nil, Default = Settings["Hop Sever Raid"] or false },
 	function(b)
 		if b and not Settings["Auto Raid"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Auto Raid Plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Auto Raid Plz", ShowTime = 5 })
 		end
 		SaveSettings("Hop Sever Raid", b)
 	end
@@ -11932,7 +12838,7 @@ function WarnOnce(b, l)
 	end
 	getgenv().__BFWarned[b] = tick()
 	pcall(function()
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = l, ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = l, ShowTime = 5 })
 	end)
 end
 function DetectSeaEvents(b)
@@ -12375,7 +13281,7 @@ ToggleFindMirage = FarmingSeaEventSection.CreateToggle(
 							getgenv().TweenBoat:Pause()
 							getgenv().TweenBoat:Cancel()
 						end
-						A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Mirage Island Spawned", ShowTime = 5 })
+						A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Mirage Island Spawned", ShowTime = 5 })
 						ToggleFindMirage:SetStage(false)
 						wait(5)
 					end
@@ -12407,7 +13313,7 @@ KitsuneEventSection.CreateToggle(
 	function(y)
 		if y then
 			A.CreateNoti({
-				Title = "Banana Cat Hub",
+				Title = "FROST BLADE HUB",
 				Desc = "Turn On after Status Full Moon|( Will Full Moon In >= 0 Minutes )",
 				ShowTime = 5,
 			})
@@ -12858,7 +13764,7 @@ function AutoFindLeviathan()
 			getgenv().TweenBoatBack:Pause()
 			getgenv().TweenBoatBack:Cancel()
 		end
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Frozen Dimension Spawned", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Frozen Dimension Spawned", ShowTime = 5 })
 		if getgenv().RespawnLeviathan and Settings["Webhook Find Leviathan"] then
 			getgenv().RespawnLeviathan = false
 			WebhookFindLeviathan()
@@ -13112,7 +14018,7 @@ LeviathanEventSection.CreateToggle(
 	},
 	function(s)
 		if s and not Settings["Auto Attack Leviathan"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Auto Attack Leviathan, plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Auto Attack Leviathan, plz", ShowTime = 5 })
 		end
 		SaveSettings("Attack Multi Segments Leviathan", s)
 	end
@@ -13457,7 +14363,7 @@ function ShootHeartLeviathan()
 				toTarget(b.Harpoon.Seat.CFrame)
 			end
 		else
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Successfully Fire Shoot Heart Leviathan", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Successfully Fire Shoot Heart Leviathan", ShowTime = 5 })
 			wait(5)
 		end
 	end
@@ -14029,11 +14935,11 @@ end
 local b = { "V2InProgress", "V3InProgress", "V2TurnInReady", "V3TurnInReady" }
 function AutoUpgradeRaceDraco()
 	if game.Players.LocalPlayer.Data.Race.Value ~= "Draco" then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Change Race Draco plz", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Change Race Draco plz", ShowTime = 5 })
 		wait(5)
 		return
 	elseif DetectItemPlr("Primordial Reign") then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done V3 Draco", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done V3 Draco", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -14293,7 +15199,7 @@ ToggleAutoTrialDraco = RaceDracoSection.CreateToggle(
 							end
 						else
 							if getgenv().DoneTrialDraco then
-								A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done Trial", ShowTime = 5 })
+								A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done Trial", ShowTime = 5 })
 								getgenv().DoneTrialDraco = false
 								ToggleAutoTrialDraco:SetStage(false)
 								return
@@ -14310,7 +15216,7 @@ ToggleAutoTrialDraco = RaceDracoSection.CreateToggle(
 								end
 							else
 								A.CreateNoti({
-									Title = "Banana Cat Hub",
+									Title = "FROST BLADE HUB",
 									Desc = "Not have Prehistoric Island",
 									ShowTime = 5,
 								})
@@ -15282,7 +16188,7 @@ end
 function UpgradeRaceV2AndV3()
 	local m = CheckRace()
 	if m == " V3" then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done V3", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done V3", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -15292,7 +16198,7 @@ function UpgradeRaceV2AndV3()
 	end
 	if m == " V1" then
 		if t.Data.Beli.Value < 500000 then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Beli >= 500k", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Beli >= 500k", ShowTime = 5 })
 			wait(5)
 			return
 		end
@@ -15374,7 +16280,7 @@ function UpgradeRaceV2AndV3()
 			game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
 			return
 		elseif l == -1 then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Beli >= 2m", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Beli >= 2m", ShowTime = 5 })
 			wait(5)
 			return
 		end
@@ -15402,7 +16308,7 @@ function UpgradeRaceV2AndV3()
 					end
 				end
 			else
-				A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Waiting Boss Spawn", ShowTime = 5 })
+				A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Waiting Boss Spawn", ShowTime = 5 })
 				wait(5)
 			end
 		elseif l == "Mink V2" then
@@ -15543,7 +16449,7 @@ ToggleAutoGetFullyCyborg = RaceNormalSection.CreateToggle(
 	function(l)
 		SaveSettings("Auto Get Fully Cyborg", l)
 		if l and not Settings["Auto Get Cyborg"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Turn On Auto Get Cyborg plz", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Auto Get Cyborg plz", ShowTime = 5 })
 		end
 	end
 )
@@ -15559,7 +16465,7 @@ RaceNormalSection.CreateToggle(
 )
 function GetCyborg()
 	if game.ReplicatedStorage.Remotes.CommF_:InvokeServer("CyborgTrainer", "Check") == 2 then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Plz Turn Off", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Plz Turn Off", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -15715,7 +16621,7 @@ function GetRaceGhoul()
 		or game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Ectoplasm", "BuyCheck", 4, true) == 2
 		or game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Ectoplasm", "Change", 4, true) == 1
 	then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Plz Turn Off", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Plz Turn Off", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -15825,7 +16731,7 @@ function GetRaceGhoul()
 			if Settings["Hop Server Get Ghoul"] then
 				SpecialHop("Cursed Captain")
 			end
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Wating Boss Spawn", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Wating Boss Spawn", ShowTime = 5 })
 			wait(5)
 		end
 	end
@@ -15992,7 +16898,7 @@ function CollectBlueGear()
 end
 function PullLeverV4()
 	if not CheckItemInventory("Valkyrie Helm") or not CheckItemInventory("Mirror Fractal") then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Not Valkyrie Helm or not Mirror Fractal", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Not Valkyrie Helm or not Mirror Fractal", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -16060,7 +16966,7 @@ function PullLeverV4()
 				fireproximityprompt(l.Lever.Prompt.ProximityPrompt, 1)
 			end
 		else
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done Pull Lever", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done Pull Lever", ShowTime = 5 })
 			wait(5)
 		end
 	end
@@ -16881,7 +17787,7 @@ function DetectQuestRainBowHaki(R)
 end
 function GetRainBowHaki()
 	if game.ReplicatedStorage.Remotes.CommF_:InvokeServer("HornedMan") == 1 then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done Get Rainbow Haki", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done Get Rainbow Haki", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -16910,7 +17816,7 @@ function GetRainBowHaki()
 				UsedualFlock()
 			until not IsMobAlive(g) or not Settings["Auto Get Rainbow Haki"]
 		else
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Waiting Boss Spawn", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Waiting Boss Spawn", ShowTime = 5 })
 			wait(5)
 		end
 	end
@@ -16980,7 +17886,7 @@ function GuitarPuzzleProgress()
 			CommF:InvokeServer("gravestoneEvent", 2, true)
 			task.wait(1)
 		else
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Hop Full Moon", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Hop Full Moon", ShowTime = 5 })
 			SpecialHop("FullMoon")
 		end
 	else
@@ -17096,12 +18002,12 @@ function AutoSoulGuitar()
 		game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("soulGuitarBuy", true)
 		== "[You already own this item.]"
 	then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "[You already own this item.]", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "[You already own this item.]", ShowTime = 5 })
 		task.wait(5)
 		return
 	end
 	if t.Data.Fragments.Value < 5000 then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Frag >= 5k", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Frag >= 5k", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -17333,7 +18239,7 @@ function QuestGood4()
 				(Settings["Select Method Hop CDK1"] or {})["Hop Raid Castle [ Delay 20s Hop Because check Raids Castle ]"]
 			then
 				A.CreateNoti({
-					Title = "Banana Cat Hub",
+					Title = "FROST BLADE HUB",
 					Desc = "Waiting 20s for check raid castle if dont have will Server",
 					ShowTime = 5,
 				})
@@ -17345,7 +18251,7 @@ function QuestGood4()
 					SpecialHop("Raid Castle")
 				end
 			else
-				A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Waint Raid Castle", ShowTime = 5 })
+				A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Waint Raid Castle", ShowTime = 5 })
 			end
 			wait(5)
 		end
@@ -17449,10 +18355,10 @@ function Questgood5()
 		TweenManager.CancelCurrent()
 	else
 		if Settings["Select Method Hop CDK1"] and Settings["Select Method Hop CDK1"]["Find Cake Queen"] then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = 'Hop Server Find Cake Queen"', ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = 'Hop Server Find Cake Queen"', ShowTime = 5 })
 			HopServer()
 		else
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = 'Wating Cake Queen"', ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = 'Wating Cake Queen"', ShowTime = 5 })
 		end
 		wait(5)
 	end
@@ -17668,13 +18574,13 @@ function CheckMasterSword(g, R)
 end
 function GetCDK()
 	if not CheckItemInventory("Tushita") or not CheckItemInventory("Yama") then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Get Tushita and Yama", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Get Tushita and Yama", ShowTime = 5 })
 		wait(5)
 		return
 	end
 	if CheckItemInventory("Tushita") and (CheckItemInventory("Yama")) then
 		if not CheckMasterSword("Yama", 350) or not CheckMasterSword("Tushita", 350) then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Mastery >= 350", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Mastery >= 350", ShowTime = 5 })
 			wait(5)
 			return
 		end
@@ -17933,7 +18839,7 @@ function GetTushita()
 				end
 			end
 		else
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Rip Indra Dont Spawn", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Rip Indra Dont Spawn", ShowTime = 5 })
 			wait(5)
 		end
 	end
@@ -18329,7 +19235,7 @@ GetItemsSection.CreateToggle(
 )
 function autoCraftSharkAnchor()
 	if CheckItemInventory("Shark Anchor") then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done Shark Anchor", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done Shark Anchor", ShowTime = 5 })
 		wait(5)
 		return
 	end
@@ -18383,7 +19289,7 @@ GetItemsSection.CreateToggle(
 )
 function AutoYorumini()
 	if CheckItemInventory("Dark Dagger") then
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "u haved Yoru Mini", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "u haved Yoru Mini", ShowTime = 5 })
 		return
 	end
 	local g = CheckNameBoss("rip_indra True Form")
@@ -18778,7 +19684,7 @@ function AutoUpgradeWeapon(R)
 	if m then
 		R = NameMaterials[m]
 		if not R then
-			A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Not Support Material" .. m .. "Sorry", ShowTime = 5 })
+			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Not Support Material" .. m .. "Sorry", ShowTime = 5 })
 			wait(5)
 			return
 		end
@@ -19095,7 +20001,7 @@ function AutoCraftinMagnetVol()
 			wait(2)
 		end
 	else
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Done Craft Volcanic Magnet", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Done Craft Volcanic Magnet", ShowTime = 5 })
 		ToggleAutoCraftingVolcanicMagnet:SetStage(false)
 	end
 end
@@ -19190,7 +20096,7 @@ function AutoFindPrehistoric()
 			getgenv().TweenBoat:Pause()
 			getgenv().TweenBoat:Cancel()
 		end
-		A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Prehistoric Island Spawned", ShowTime = 5 })
+		A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Prehistoric Island Spawned", ShowTime = 5 })
 		ToggleAutoFindPrehistoricIsland:SetStage(false)
 		wait(5)
 	end
@@ -20450,7 +21356,7 @@ local b = {
 	Username = "Binini Hub",
 	AvatarURL = "https://images-ext-1.discordapp.net/external/9LSZu__Uvs7I0N8MWag-JmwF2iT-pHCHSe2UdixGEXQ/%3Fsize%3D4096/https/cdn.discordapp.com/avatars/1262364141968949308/a_0c5fb64e2cbb35d029d73b44576c6a60.gif",
 	BannerURL = "https://cdn.discordapp.com/attachments/1017024488665264218/1262729537578471504/banner_server.jpg",
-	Title = "Banana Hub Notification",
+	Title = "FROST BLADE HUB Notification",
 	FooterText = "Binini Hub",
 	Color = 16776960,
 }
@@ -20550,7 +21456,7 @@ function Webhookprofile()
 			BannerURL = "https://cdn.discordapp.com/attachments/1017024488665264218/1262729537578471504/banner_server.jpg",
 			AvatarURL = "https://images-ext-1.discordapp.net/external/9LSZu__Uvs7I0N8MWag-JmwF2iT-pHCHSe2UdixGEXQ/%3Fsize%3D4096/https/cdn.discordapp.com/avatars/1262364141968949308/a_0c5fb64e2cbb35d029d73b44576c6a60.gif",
 			Username = "Binini Hub",
-			Title = "<:bananacon:1261744974534541352> Banana Hub Notification <:bananacon:1261744974534541352>",
+			Title = "<:bananacon:1261744974534541352> FROST BLADE HUB Notification <:bananacon:1261744974534541352>",
 			FooterText = "Binini Hub",
 			FruitMinValue = 1000000,
 			ItemMinRarity = 3,
@@ -21045,7 +21951,7 @@ spawn(function()
 end)
 a.CreateButton({ Title = "Copy Config" }, function()
 	setclipboard(b((HttpService:JSONDecode(readfile(FolderName .. "/" .. SaveFileName)))))
-	A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Successfully Copy Config", ShowTime = 5 })
+	A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Successfully Copy Config", ShowTime = 5 })
 end)
 a.CreateBind({ Title = "Toggle GUI", Key = Enum.KeyCode.LeftControl }, function()
 	if getgenv().UIToggled == nil then
@@ -21127,7 +22033,7 @@ if not getgenv().BananaCatMainLoop then
 		if tick() - lastHopTick >= 500 then
 			lastHopTick = tick()
 			pcall(function()
-				writefile("Banana Cat Hub/Jobid.json", HttpService:JSONEncode({}))
+				writefile("FROST BLADE HUB/Jobid.json", HttpService:JSONEncode({}))
 			end)
 		end
 		pcall(function()
@@ -21209,7 +22115,7 @@ if not getgenv().BananaCatMainLoop then
 						if b then
 							SpecialHop(b)
 						else
-							A.CreateNoti({ Title = "Banana Cat Hub", Desc = "Full Sword Legendary", ShowTime = 5 })
+							A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Full Sword Legendary", ShowTime = 5 })
 						end
 					end
 				end
@@ -21226,4 +22132,19 @@ if not getgenv().BananaCatMainLoop then
 		end
 	end)
 end
-getgenv().__BF_LOADED = true
+-- A janela pode ser reiniciada, sem trava global.
+        -- FIM: CODIGO ORIGINAL DO USUARIO
+    end,function(err)
+        local trace=(debug and debug.traceback and debug.traceback()) or ""
+        return tostring(err).." "..tostring(trace)
+    end)
+    if not ok then
+        warn("[FROST BLADE] O menu abriu, mas algumas funções falharam: "..tostring(reason))
+        warn("[FROST BLADE] Para localizar controles nao conectados: _G.FrostBladeHub.PrintReport()")
+        FrostBlade.Complete("Menu aberto; erro ao carregar funções (veja Output/F9)")
+    else
+        FrostBlade.Complete(tostring(#FrostBlade.Features).." controles • "..tostring((function()
+            local n=0;for _,f in ipairs(FrostBlade.Features) do if f.Connected then n+=1 end end;return n end)()).." conectados")
+    end
+end)
+
