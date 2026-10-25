@@ -1549,6 +1549,21 @@ function ReadSetting(tries)
 	end
 end
 Settings = ReadSetting()
+-- V10 FIX: keep user selections and initialize missing farm choices safely.
+if Settings["Select Method Farm"] == nil then
+    Settings["Select Method Farm"] = "Level Farm"
+end
+if Settings["Select Weapon"] == nil then
+    Settings["Select Weapon"] = "Melee"
+end
+if Settings["Auto Turn On Buso"] == nil then
+    Settings["Auto Turn On Buso"] = true
+end
+-- Mastery / material previously looked enabled but did not run because
+-- the main farm switch had not been enabled.
+if Settings["Farm Mastery"] == true or Settings["Farm Material"] == true then
+    Settings["Start Farm"] = true
+end
 getgenv().Settings = Settings
 function PrepareMultiSelectList(b, t, A)
 	local a = {}
@@ -1746,6 +1761,11 @@ NameMaterials = {
 TableMaterials = {}
 for g, G in next, NameMaterials, nil do
 	table.insert(TableMaterials, g)
+end
+if Settings["Farm Material"] and not NameMaterials[Settings["Select Material"]] then
+    Settings["Farm Material"] = false
+    if not Settings["Farm Mastery"] then Settings["Start Farm"] = false end
+    warn("[FROST BLADE / FARM] Farm Material estava ligado sem material selecionado; desativado para evitar erro.")
 end
 REDEEM_CODES = {
 	"EASTEREXP",
@@ -6545,19 +6565,39 @@ function DeleteIgnoredMob()
 		end
 	end
 end
-function DetectMob(Q)
-	local d, I = 1 / 0
-	for _, o in pairs(game.Workspace.Enemies:GetChildren()) do
-		if (typeof(Q) == "table" and (table.find(Q, o.Name)) or o.Name == Q) and (IsMobAlive(o)) then
-			_ = (
-				o.HumanoidRootPart.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position
-			).magnitude
-			if _ < d then
-				d, I = _, o
-			end
-		end
-	end
-	return I
+-- V10 FIX: tolerate level suffixes and temporarily unloaded enemy folders.
+local function frostMobBaseName(name)
+    if type(name) ~= "string" then return "" end
+    return (name:gsub("%s*%[Lv%.%s*%d+%]", "")
+                :gsub("%s*%[Boss%]", "")
+                :gsub("^%s+", ""):gsub("%s+$", ""))
+end
+local function frostSameMob(mobName, target)
+    if type(target) == "table" then
+        for _,name in pairs(target) do
+            if type(name) == "string" and frostMobBaseName(name) == frostMobBaseName(mobName) then
+                return true
+            end
+        end
+        return false
+    end
+    return type(target) == "string" and frostMobBaseName(target) == frostMobBaseName(mobName)
+end
+function DetectMob(target)
+    local enemies = workspace:FindFirstChild("Enemies")
+    local char = t.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not enemies or not root or not target or target == "" then return nil end
+    local bestDistance, best = math.huge, nil
+    for _,mob in ipairs(enemies:GetChildren()) do
+        if IsMobAlive(mob) and frostSameMob(mob.Name, target) then
+            local distance = (mob.HumanoidRootPart.Position-root.Position).Magnitude
+            if distance < bestDistance then
+                bestDistance,best = distance,mob
+            end
+        end
+    end
+    return best
 end
 function CheckNameBoss(Q)
 	local d, I, _ = next, game.ReplicatedStorage:GetChildren()
@@ -6575,7 +6615,12 @@ function CheckNameBoss(Q)
 end
 getgenv().TableMobSpawn = {}
 spawn(function()
-	for Q, Q in pairs(getnilinstances()) do
+    local nilInstances = {}
+    if type(getnilinstances) == "function" then
+        local ok, found = pcall(getnilinstances)
+        if ok and type(found) == "table" then nilInstances = found end
+    end
+	for Q, Q in pairs(nilInstances) do
 		if
 			if Q:GetAttribute("DisplayName") and (string.find(Q:GetAttribute("DisplayName"), "Lv."))
 				then (Q:GetAttribute("DisplayName"):gsub(" %pLv. %d+%p", ""))
@@ -6584,7 +6629,9 @@ spawn(function()
 			table.insert(TableMobSpawn, Q)
 		end
 	end
-	for Q, Q in pairs(game:GetService("Workspace")._WorldOrigin.EnemySpawns:GetChildren()) do
+    local origin = workspace:FindFirstChild("_WorldOrigin")
+    local spawns = origin and origin:FindFirstChild("EnemySpawns")
+	for Q, Q in pairs(spawns and spawns:GetChildren() or {}) do
 		if
 			if Q:GetAttribute("DisplayName") and (string.find(Q:GetAttribute("DisplayName"), "Lv."))
 				then (Q:GetAttribute("DisplayName"):gsub(" %pLv. %d+%p", ""))
@@ -6827,24 +6874,43 @@ function FFCMatch(m, I)
 	end
 	return nil
 end
+-- V10 FIX: a single Auto Haki worker; starts automatically and respects OFF.
+-- A previous `or true` made the toggle visibly ON even when saved as OFF.
+local frostHakiEnabled = Settings["Auto Turn On Buso"] ~= false
+local frostHakiLastAttempt = 0
+local function frostHakiActive(character)
+    return character and (character:FindFirstChild("HasBuso")
+        or FFCMatch(character, "_BusoLayer1")) ~= nil
+end
+local function frostTryHaki()
+    if not frostHakiEnabled or not Settings["Auto Turn On Buso"] then return end
+    local character = t.Character
+    local human = character and character:FindFirstChildOfClass("Humanoid")
+    if not human or human.Health <= 0 or frostHakiActive(character) then return end
+    if os.clock() - frostHakiLastAttempt < 3 then return end
+    frostHakiLastAttempt = os.clock()
+    local ok, why = pcall(function() CommF:InvokeServer("Buso") end)
+    if not ok then warn("[FROST BLADE / HAKI] " .. tostring(why)) end
+end
 SettingFarmMainSection.CreateToggle(
-	{ Title = "Auto Turn On Buso", Desc = nil, Default = Settings["Auto Turn On Buso"] or true },
-	function(m)
-		if m then
-			spawn(function()
-				while Settings["Auto Turn On Buso"] and (wait(1)) do
-					pcall(function()
-						if not FFCMatch(t.Character, "_BusoLayer1") and not t.Character:FindFirstChild("HasBuso") then
-							CommF:InvokeServer("Buso")
-							task.wait(2)
-						end
-					end)
-				end
-			end)
-		end
-		SaveSettings("Auto Turn On Buso", m)
-	end
+    { Title = "Auto Turn On Buso", Desc = "Ativa automaticamente e tenta de novo apos renascer.", Default = frostHakiEnabled },
+    function(enabled)
+        frostHakiEnabled = enabled == true
+        SaveSettings("Auto Turn On Buso", frostHakiEnabled)
+        if frostHakiEnabled then task.spawn(frostTryHaki) end
+    end
 )
+t.CharacterAdded:Connect(function()
+    frostHakiLastAttempt = 0
+    if frostHakiEnabled then task.delay(2, frostTryHaki) end
+end)
+task.spawn(function()
+    task.wait(2)
+    while gui.Parent do
+        if frostHakiEnabled then frostTryHaki() end
+        task.wait(1.5)
+    end
+end)
 SettingFarmMainSection.CreateToggle(
 	{ Title = "Auto Turn On Observation", Desc = nil, Default = Settings["Auto Turn On Observation"] or false },
 	function(m)
@@ -7132,7 +7198,21 @@ SettingAutoFarmSection.CreateToggle(
 local o = SettingAutoFarmSection.CreateToggle(
 	{ Title = "Start Farm", Desc = nil, Default = Settings["Start Farm"] or false },
 	function(V)
-		SaveSettings("Start Farm", V)
+        SaveSettings("Start Farm", V == true)
+        if V == true then
+            -- The shared farm loop resumes after other features release StackFarm.
+            if not StackFarm then StackFarm = true end
+        else
+            -- Turning the master switch OFF stops mastery and material farm too.
+            if Settings["Farm Mastery"] then
+                SaveSettings("Farm Mastery", false)
+                FrostBlade.Set("Farm Mastery", false)
+            end
+            if Settings["Farm Material"] then
+                SaveSettings("Farm Material", false)
+                FrostBlade.Set("Farm Material", false)
+            end
+        end
 	end
 )
 MasteryFarmSection = FarmMain.CreateSection("Mastery Farm")
@@ -7157,10 +7237,18 @@ MasteryFarmSection.CreateSlider(
 MasteryFarmSection.CreateToggle(
 	{ Title = "Farm Mastery", Desc = nil, Default = Settings["Farm Mastery"] or false },
 	function(V)
-		SaveSettings("Farm Mastery", V)
-		if V and not Settings["Start Farm"] then
-			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Start Farm Plz", ShowTime = 5 })
-		end
+        SaveSettings("Farm Mastery", V == true)
+        if V then
+            if not Settings["Select Method Farm Mastery"] then
+                SaveSettings("Select Method Farm Mastery", "Blox Fruit")
+            end
+            if not Settings["Start Farm"] then
+                SaveSettings("Start Farm", true)
+                FrostBlade.Set("Start Farm", true)
+            end
+            if not StackFarm then StackFarm = true end
+            A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Mastery conectado ao farm principal", ShowTime = 4 })
+        end
 	end
 )
 FarmingMaterialSection = FarmMain.CreateSection("Farming Material")
@@ -7179,10 +7267,20 @@ FarmingMaterialSection.CreateDropdown(
 FarmingMaterialSection.CreateToggle(
 	{ Title = "Farm Material", Desc = nil, Default = Settings["Farm Material"] or false },
 	function(V)
-		SaveSettings("Farm Material", V)
-		if V and not Settings["Start Farm"] then
-			A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Turn On Start Farm Plz", ShowTime = 5 })
-		end
+        if V and not NameMaterials[Settings["Select Material"]] then
+            A.CreateNoti({ Title = "FROST BLADE HUB", Desc = "Selecione um material antes de ligar o farm", ShowTime = 6 })
+            SaveSettings("Farm Material", false)
+            FrostBlade.Set("Farm Material", false)
+            return
+        end
+        SaveSettings("Farm Material", V == true)
+        if V then
+            if not Settings["Start Farm"] then
+                SaveSettings("Start Farm", true)
+                FrostBlade.Set("Start Farm", true)
+            end
+            if not StackFarm then StackFarm = true end
+        end
 	end
 )
 local V, N, y, P, e, Y =
@@ -7383,6 +7481,8 @@ GetLevelQuestMob = function()
 end
 
 function DetectPartSpawnMob(V, H)
+    -- An unset selector must not crash the entire Auto Farm loop.
+    if type(V) ~= "string" or V == "" then return nil end
 	local function B(C)
 		return C:gsub(" %p?Lv%.? %d+%p?", "")
 	end
@@ -7395,7 +7495,9 @@ function DetectPartSpawnMob(V, H)
 			end
 		end
 	end
-	for J, F in pairs(workspace._WorldOrigin.EnemySpawns:GetChildren()) do
+    local origin = workspace:FindFirstChild("_WorldOrigin")
+    local spawnFolder = origin and origin:FindFirstChild("EnemySpawns")
+	for J, F in pairs(spawnFolder and spawnFolder:GetChildren() or {}) do
 		if F:IsA("Part") then
 			J = string.find(F.Name, "Lv.") and (B(F.Name)) or F.Name
 			if (J == V or J == C) and (not H or not F:FindFirstChild("Ignored")) then
@@ -7404,7 +7506,12 @@ function DetectPartSpawnMob(V, H)
 			end
 		end
 	end
-	for J, F in pairs(getnilinstances()) do
+    local nilParts = {}
+    if type(getnilinstances) == "function" then
+        local ok, found = pcall(getnilinstances)
+        if ok and type(found) == "table" then nilParts = found end
+    end
+	for J, F in pairs(nilParts) do
 		if F:IsA("Part") then
 			J = string.find(F.Name, "Lv.") and (B(F.Name)) or F.Name
 			if (J == V or J == C) and (not H or not F:FindFirstChild("Ignored")) then
@@ -7579,10 +7686,11 @@ getgenv().StackFarmOther = true
 StackFarm = getgenv().StackFarm
 StackFarmOther = getgenv().StackFarmOther
 function DetectMobAura()
-	local V, H = typeof(Settings["Distance Farm Aura"]) ~= "number" and (tonumber(Settings["Distance Farm Aura"]))
-		or Settings["Distance Farm Aura"]
-		or 300
-	for B, C in pairs(game.Workspace.Enemies:GetChildren()) do
+    local enemies = workspace:FindFirstChild("Enemies")
+    local char = t.Character
+    if not enemies or not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+    local V, H = math.clamp(tonumber(Settings["Distance Farm Aura"]) or 300, 0, 1000), nil
+	for B, C in pairs(enemies:GetChildren()) do
 		if IsMobAlive(C) then
 			B = (
 				C.HumanoidRootPart.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position
@@ -7827,20 +7935,34 @@ function FarmMethod()
 		V = if f == "Aura Farm" and (DetectMobAura()) then { DetectMobAura() } else V
 	end
 	if Settings["Farm Material"] then
-		V = NameMaterials[Settings["Select Material"]]
-		if not NameWorldMaterials[Settings["Select Material"]][game.PlaceId] then
-			f = NameWorldMaterials[Settings["Select Material"]][getgenv().CheckPlaceId2]
-				or NameWorldMaterials[Settings["Select Material"]][getgenv().CheckPlaceId3]
-				or NameWorldMaterials[Settings["Select Material"]][getgenv().CheckPlaceId]
-			game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(f)
-			return
-		end
-	end
-	f = V or (GetNameDoubleQuest()) or (GetLevelQuestMob and GetLevelQuestMob()) or ""
+        local selectedMaterial = Settings["Select Material"]
+        V = selectedMaterial and NameMaterials[selectedMaterial]
+        local materialWorld = selectedMaterial and NameWorldMaterials[selectedMaterial]
+        if not V or not materialWorld then
+            warn("[FROST BLADE / FARM] Material invalido ou nao selecionado")
+            return
+        end
+        if not materialWorld[game.PlaceId] then
+            local travel = materialWorld[getgenv().CheckPlaceId2]
+                or materialWorld[getgenv().CheckPlaceId3]
+                or materialWorld[getgenv().CheckPlaceId]
+            if travel then CommF:InvokeServer(travel) end
+            return
+        end
+    end
+    -- Avoid using a stale quest mob from the previous mission for Level Farm.
+    if V then
+        f = V
+    elseif HasQuest() then
+        f = (GetNameDoubleQuest()) or (GetLevelQuestMob and GetLevelQuestMob()) or ""
+    else
+        f = (GetLevelQuestMob and GetLevelQuestMob()) or ""
+    end
 	if getgenv().DebugFarmLevel then
 		print(("[FarmMethod] HasQuest=%s f=%s"):format(tostring(HasQuest()), tostring(f)))
 	end
-	if not HasQuest() and typeof(f) == "string" then
+	if not Settings["Farm Material"] and not HasQuest() and typeof(f) == "string" then
+        -- Quest not needed when collecting materials.
 		TakeQuestLevel()
 	else
 		if
@@ -7953,7 +8075,7 @@ function FarmMethod()
 					return
 				end
 				local Y = DetectNameTablePart(f)
-				local H = DetectPartSpawnMob(Y)
+                local H = Y and DetectPartSpawnMob(Y)
 				if H then
 					table.insert(N, Y)
 					repeat
@@ -8005,17 +8127,26 @@ function FarmMethod()
 		end
 	end
 end
+-- V10 FIX: visible, rate-limited diagnostic instead of a silent crashing loop.
+local frostFarmLastError = ""
+local frostFarmLastWarn = 0
 spawn(function()
-	while task.wait() do
-		local f, f = pcall(function()
-			if Settings["Start Farm"] and StackFarm then
-				FarmMethod()
-			end
-		end)
-		if f then
-			print(f)
-		end
-	end
+    while gui.Parent do
+        task.wait(Settings["Start Farm"] and 0.15 or 0.5)
+        if Settings["Start Farm"] and StackFarm then
+            local ok, err = pcall(FarmMethod)
+            if not ok then
+                local message = tostring(err)
+                if message ~= frostFarmLastError or os.clock() - frostFarmLastWarn >= 10 then
+                    frostFarmLastError = message
+                    frostFarmLastWarn = os.clock()
+                    warn("[FROST BLADE / AUTO FARM] " .. message)
+                    notify("Auto Farm: erro detectado. Veja Output/F9.")
+                end
+                task.wait(0.5)
+            end
+        end
+    end
 end)
 stackFarmMain = Main.CreatePage({ Page_Name = "Stack Farming", Page_Title = "Stack Farming" })
 AutoWorldSection = stackFarmMain.CreateSection("Auto World")
@@ -9283,7 +9414,7 @@ local function iniciarRisco()
     local geracaoAtual = riscoGeracao
     task.spawn(function()
         while Settings["Risco Ataque Rapido NPC"] and geracaoAtual == riscoGeracao do
-            local frequencia = math.clamp(tonumber(Settings["Risco Velocidade Ataque"]) or 10, 1, 16)
+            local frequencia = math.clamp(tonumber(Settings["Risco Velocidade Ataque"]) or 10, 1, 32)
             if riscoEncontrarAlvo() then
                 local ok, err = pcall(function()
                     local char = game.Players.LocalPlayer.Character
@@ -9324,9 +9455,9 @@ RiscoSection.CreateToggle(
     end
 )
 RiscoSection.CreateSlider(
-    { Title = "Velocidade Kill Aura (golpes/s)", Min = 1, Max = 16, Default = math.clamp(tonumber(Settings["Risco Velocidade Ataque"]) or 10, 1, 16), Precise = false },
+    { Title = "Velocidade Kill Aura (golpes/s)", Min = 1, Max = 32, Default = math.clamp(tonumber(Settings["Risco Velocidade Ataque"]) or 10, 1, 32), Precise = false },
     function(valor)
-        SaveSettings("Risco Velocidade Ataque", math.clamp(math.floor((tonumber(valor) or 10) + 0.5), 1, 16))
+        SaveSettings("Risco Velocidade Ataque", math.clamp(math.floor((tonumber(valor) or 10) + 0.5), 1, 32))
     end
 )
 -- Quando o estado foi salvo como ligado, reiniciar a rotina apos criar os controles.
@@ -10964,20 +11095,28 @@ function TableMob()
 			end
 		end
 	end
-	if game:GetService("Workspace")._WorldOrigin.EnemySpawns:FindFirstChildWhichIsA("Part") then
-		for Y, Y in pairs(game:GetService("Workspace")._WorldOrigin.EnemySpawns:GetChildren()) do
+    local origin = workspace:FindFirstChild("_WorldOrigin")
+    local spawnFolder = origin and origin:FindFirstChild("EnemySpawns")
+	if spawnFolder and spawnFolder:FindFirstChildWhichIsA("Part") then
+		for Y, Y in pairs(spawnFolder:GetChildren()) do
 			if not string.find(Y.Name, "Boss") and y[Y.Name] == nil then
 				y[Y.Name] = false
 			end
 		end
-		if string.find(game:GetService("Workspace")._WorldOrigin.EnemySpawns:GetChildren()[1].Name, "Lv.") then
-			for Y, Y in pairs(getnilinstances()) do
+        local spawned = spawnFolder:GetChildren()
+        local nilModels = {}
+        if type(getnilinstances) == "function" then
+            local ok, found = pcall(getnilinstances)
+            if ok and type(found) == "table" then nilModels = found end
+        end
+		if spawned[1] and string.find(spawned[1].Name, "Lv.") then
+			for Y, Y in pairs(nilModels) do
 				if table.find(P, tostring(Y.Name:gsub(" %pLv. %d+%p", ""))) and y[Y.Name] == nil then
 					y[Y.Name] = false
 				end
 			end
 		else
-			for Y, Y in pairs(getnilinstances()) do
+			for Y, Y in pairs(nilModels) do
 				if table.find(P, Y.Name) and y[Y.Name] == nil then
 					y[Y.Name] = false
 				end
@@ -18792,7 +18931,12 @@ function GetHitBoxTouch()
 	if g then
 		return g
 	end
-	local g, R, m = next, getnilinstances()
+    local nilInstances = {}
+    if type(getnilinstances) == "function" then
+        local ok, found = pcall(getnilinstances)
+        if ok and type(found) == "table" then nilInstances = found end
+    end
+	local g, R, m = next, nilInstances
 	for l, l in g, R, m do
 		if l.Name == "Hitbox" then
 			if (l.Position - Vector3.new(5713.53759765625, 38.38311767578125, 255.2017059326172)).Magnitude == 0 then
@@ -21985,9 +22129,18 @@ spawn(function()
 		)
 	end)
 end)
-loadstring(
+-- Optional compatibility hook; never block the rest of Auto Farm if unsupported.
+local frostHookOk, frostHookError = pcall(function()
+    if type(loadstring) ~= "function" or type(getrawmetatable) ~= "function"
+        or type(setreadonly) ~= "function" or type(newcclosure) ~= "function"
+        or type(getnamecallmethod) ~= "function" then
+        return
+    end
+    loadstring(
 	'local MT = getrawmetatable(game)\10local OldNameCall = MT.__namecall\10setreadonly(MT, false)\10MT.__namecall = newcclosure(function(self, ...)\10 local Method = getnamecallmethod()\10 local Args = { ... }\10 if\10 Method == "FireServer"\10 and self.Name == "RemoteEvent"\10 and AimPos\10 and tostring(AimPos.X) ~= "nan"\10 and (\10 Settings["Auto Event Prehistoric Island"]\10 or Settings["Kill players When complete Trial"]\10 or Settings["Auto Quest Dragon Hunter"]\10 or Settings["Auto Quest Dojo Trainer"]\10 or Settings["Farm Mastery"]\10 or Settings["Auto Attack Leviathan"]\10 or Settings["Auto Sea Event"]\10 or Settings["Auto Upgrade Race V2-V3"]\10 or Settings["Auto Trial"]\10 or Settings["Auto Aimbot"]\10 or Settings["Auto Shipwright"]\10 )\10 then\10 if #Args == 1 and typeof(Args[1]) == "Vector3" then\10 Args[1] = AimPos.Position\10 end\10 if #Args == 1 and typeof(Args[1]) == "CFrame" then\10 Args[1] = AimPos\10 end\10 end\10 return OldNameCall(self, unpack(Args))\10end)\10setreadonly(MT, true)\10'
-)()
+    )()
+end)
+if not frostHookOk then warn("[FROST BLADE / compatibilidade] " .. tostring(frostHookError)) end
 x = game:GetService("RunService")
 
 -- NOCLIP chay tren Stepped (truoc physics), doc lap voi phan con lai cua script
